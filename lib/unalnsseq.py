@@ -96,7 +96,7 @@ def drop_seq_from_paf(paf_path, least_coverage, out_seq_list_path):
             output_set = set()
             for line in fin:
                 temp = line.rstrip().split('\t')
-                if float(temp[9])/float(temp[1]) * 100 >= least_coverage:
+                if float(temp[9]) / float(temp[1]) * 100 >= least_coverage:
                     output_set.add(temp[0])
             fout.write('\n'.join(output_set))
     return len(output_set)
@@ -108,7 +108,8 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--assembly_path', metavar='<assembly.fa>',
                         help='Path of contigs or scaffolds', type=str, required=True)
     parser.add_argument('-u', '--unaln_path', metavar='<unaligned.info>',
-                        help='Path of unaligned table (at quast_output/contigs_reports/contigs_report_xxx.unaligned.info)',
+                        help='Path of unaligned table (at quast_output/contigs_reports/contigs_report_xxx.unaligned'
+                             '.info)',
                         type=str, required=True)
     parser.add_argument('-o', '--output_path', metavar='<output.fa>',
                         help='Path of output unaln sequences', type=str, required=True)
@@ -121,26 +122,29 @@ if __name__ == "__main__":
                         help='Add sample tag before each contig/scaffold \
                         (default: None, e.g. -s Sample1 , "_" will be used, Chr1 -> Sample1_Chr1)', type=str,
                         default='')
-    parser.add_argument('-rr', '--realign_reference', metavar='<reference.fa>',
-                        help='Using minimap2 to realign  to reference genome/mitochondrion/plastid and drop high similar unaligned sub sequences',
-                        type=str, default='')
-    parser.add_argument('-ri', '--realign_identity', metavar='<int>',
-                        help='[Only use when -rr on] Min alignment identity of sequences in realign step (choices: 80/90/95. default: 90)',
-                        type=int, choices=[80, 90, 95],
-                        default=90)
-    parser.add_argument('-rc', '--realign_coverage', metavar='<int>',
-                        help='[Only use when -rr on] Min alignment coverage of sequences in realign step (default: 80)',
-                        type=int,
-                        default=80)
-    parser.add_argument('-rm', '--realign_minimap2', metavar='<minimap2_path>',
-                        help='[Only use when -rr on] Path of minimap2 (default: minimap2 in $PATH)', type=str,
-                        default='minimap2')
-    parser.add_argument('-rt', '--realign_thread', metavar='<int>',
-                        help='[Only use when -rr on] Number of threads using minimap2 (default: 1)', type=int,
-                        default=1)
-    parser.add_argument('-rd', '--realign_dir', metavar='<str>',
-                        help='[Only use when -rr on] Temp directory to realign (default: temp_dir)', type=str,
-                        default='temp_dir')
+    parserr = parser.add_argument_group('realign parameters')
+    parserr.add_argument('-rr', '--realign_reference', metavar='<reference.fa>',
+                         help='Using minimap2 to realign  to reference genome/mitochondrion/plastid and drop high '
+                              'similar unaligned sub sequences',
+                         type=str, default='')
+    parserr.add_argument('-ri', '--realign_identity', metavar='<int>',
+                         help='[Only use when -rr on] Min alignment identity of sequences in realign step (choices: '
+                              '80/90/95. default: 90)',
+                         type=int, choices=[80, 90, 95],
+                         default=90)
+    parserr.add_argument('-rc', '--realign_coverage', metavar='<int>',
+                         help='[Only use when -rr on] Min alignment coverage of sequences (default: 80)',
+                         type=int,
+                         default=80)
+    parserr.add_argument('-rm', '--realign_minimap2', metavar='<minimap2_path>',
+                         help='[Only use when -rr on] Path of minimap2 (default: minimap2 in $PATH)', type=str,
+                         default='minimap2')
+    parserr.add_argument('-rt', '--realign_thread', metavar='<int>',
+                         help='[Only use when -rr on] Number of threads using minimap2 (default: 1)', type=int,
+                         default=1)
+    parserr.add_argument('-rd', '--realign_dir', metavar='<str>',
+                         help='[Only use when -rr on] Temp directory to realign (default: temp_dir)', type=str,
+                         default='temp_dir')
     args = vars(parser.parse_args())
     assembly_file = args['assembly_path']
     unalign_table = args['unaln_path']
@@ -169,7 +173,8 @@ if __name__ == "__main__":
     input_record_num, output_record_num, output_subseq_num = write_interval_seq(assembly_file, unalign_dict,
                                                                                 output_fasta, sample_tag)
     logging.info(
-        "# Load {inseq_n} chromosomes/contigs/scaffolds from fasta, write {outseq_n} sequences with {suboutseq_n} sub sequences.".format(
+        "# Load {inseq_n} chromosomes/contigs/scaffolds from fasta, write {outseq_n} sequences with {suboutseq_n} sub "
+        "sequences.".format(
             inseq_n=input_record_num,
             outseq_n=output_record_num,
             suboutseq_n=output_subseq_num
@@ -201,14 +206,16 @@ if __name__ == "__main__":
             query=output_fasta,
             temp_dir=args["realign_dir"],
             temp_paf=temp_paf
-            )
+        )
         os.system(command)
         logging.info("# Finish realigning sub sequences to references.")
         # filter
         temp_out_seq_list_path = "drop_sseq.txt"
         temp_out_seq_filtered_path = "remain_sseq.fa"
-        drop_n = drop_seq_from_paf(args["realign_dir"] + '/' + temp_paf, args["realign_coverage"], args["realign_dir"] + '/' + temp_out_seq_list_path)
-        fsr_return_status = gi.fa_some_record(output_fasta, args["realign_dir"] + '/' + temp_out_seq_list_path, args["realign_dir"] + '/' + temp_out_seq_filtered_path, exclude=True)
+        drop_n = drop_seq_from_paf(args["realign_dir"] + '/' + temp_paf, args["realign_coverage"],
+                                   args["realign_dir"] + '/' + temp_out_seq_list_path)
+        fsr_return_status = gi.fa_some_record(output_fasta, args["realign_dir"] + '/' + temp_out_seq_list_path,
+                                              args["realign_dir"] + '/' + temp_out_seq_filtered_path, exclude=True)
         logging.info("# Remove {n} sub sequences similiar to references.".format(n=drop_n))
         # mv and rm temp dir
         logging.info("# Update sub sequences and remove temp files.")
