@@ -37,7 +37,7 @@ def read_unaln_table(unalign_table, kind_unalign, min_len):
     return unalign_dict
 
 
-def write_interval_seq(fasta_file, chrn_intervals, output_fasta, sample_tag):
+def write_interval_seq(fasta_file, chrn_intervals, output_fasta, sample_tag, nbase_ignore, nbase='N'):
     # init
     input_record_num = 0
     output_record_num = 0
@@ -55,10 +55,13 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fasta, sample_tag):
                         if seq_name in chrn_intervals:
                             output_record_num += 1
                             for interval in chrn_intervals[seq_name][3].intervals:
+                                sub_seq = interval.getsubseq(seq_seq)
+                                if sub_seq.count(nbase)/len(sub_seq) * 100 > nbase_ignore:
+                                    continue
                                 fout.write('>' + sample_tag + seq_name + ':' + str(
                                     interval.lower_bound) + '-' + str(interval.upper_bound) + ' ' +
                                            chrn_intervals[seq_name][2] + '\n')
-                                fout.write(interval.getsubseq(seq_seq) + '\n')
+                                fout.write(sub_seq + '\n')
                                 output_subseq_num += 1
                     seq_name = trans_contig_name(line.rstrip()[1:])
                     seq_seq = ''
@@ -69,10 +72,13 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fasta, sample_tag):
                 if seq_name in chrn_intervals:
                     output_record_num += 1
                     for interval in chrn_intervals[seq_name][3].intervals:
+                        sub_seq = interval.getsubseq(seq_seq)
+                        if sub_seq.count('N') / len(sub_seq) * 100 > nbase_ignore:
+                            continue
                         fout.write('>' + sample_tag + seq_name + ':' + str(
                             interval.lower_bound) + '-' + str(interval.upper_bound) + ' ' + chrn_intervals[seq_name][
                                        2] + '\n')
-                        fout.write(interval.getsubseq(seq_seq + '\n'))
+                        fout.write(sub_seq + '\n')
                         output_subseq_num += 1
     return input_record_num, output_record_num, output_subseq_num
 
@@ -122,6 +128,10 @@ if __name__ == "__main__":
                         help='Add sample tag before each contig/scaffold \
                         (default: None, e.g. -s Sample1 , "_" will be used, Chr1 -> Sample1_Chr1)', type=str,
                         default='')
+    parser.add_argument('-n', '--nbase_ignore', metavar='<int>',
+                        help='Max percentage of N bases in sub sequences to ignore (default: 100)',
+                        type=int, default=100)
+
     parserr = parser.add_argument_group('realign parameters')
     parserr.add_argument('-rr', '--realign_reference', metavar='<reference.fa>',
                          help='Using minimap2 to realign  to reference genome/mitochondrion/plastid and drop high '
@@ -152,6 +162,7 @@ if __name__ == "__main__":
     length_cutoff = args['length_filter']
     kind_use = args['kind_unaln']
     sample_tag = args['sample_tag']
+    nbase_ignore = args['nbase_ignore']
     if kind_use == 'all':
         kind_use = ['full', 'partial']
     else:
@@ -171,7 +182,7 @@ if __name__ == "__main__":
     logging.info(
         "# Load {record_n} chromosomes/contigs/scaffolds from unalign.info".format(record_n=len(unalign_dict.keys())))
     input_record_num, output_record_num, output_subseq_num = write_interval_seq(assembly_file, unalign_dict,
-                                                                                output_fasta, sample_tag)
+                                                                                output_fasta, sample_tag, nbase_ignore)
     logging.info(
         "# Load {inseq_n} chromosomes/contigs/scaffolds from fasta, write {outseq_n} sequences with {suboutseq_n} sub "
         "sequences.".format(

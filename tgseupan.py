@@ -72,6 +72,9 @@ if __name__ == "__main__":
                             help='Add sample tag before each contig/scaffold \
                             (default: None, e.g. -s Sample1 , "_" will be used, Chr1 -> Sample1_Chr1)', type=str,
                             default='')
+    parser_uss.add_argument('-n', '--nbase_ignore', metavar='<int>',
+                            help='Max percentage of N bases in sub sequences to ignore (default: 100)',
+                            type=int, default=100)
     parserr_ussr = parser_uss.add_argument_group('realign parameters')
     parserr_ussr.add_argument('-rr', '--realign_reference', metavar='<reference.fa>',
                               help='Using minimap2 to realign  to reference genome/mitochondrion/plastid and drop high '
