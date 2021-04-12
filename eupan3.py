@@ -97,6 +97,14 @@ if __name__ == "__main__":
     parserr_ubsr.add_argument('-rd', '--realign_dir', metavar='<str>',
                               help='[Only use when -rr on] Temp directory to realign (default: temp_dir)', type=str,
                               default='temp_dir_[Time]')
+    # MergebSeq
+    parser_ms = sub_parser.add_parser("mergebseq", help='''Merge the block sequences from many files''')
+    parser_ms.add_argument('-o', '--output', metavar='<output.fa>',
+                           help='Path of output fasta', type=str, default='merged_unaln.fa')
+    parser_ms.add_argument('--allow_samectg', action='store_true',
+                           help='Allow the sample contig/scaffold name', default=False)
+    parser_ms.add_argument('input_fa', nargs='+',
+                           help='Path of input fasta', type=str)
 
     # RmRedunant
 
