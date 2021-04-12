@@ -98,7 +98,7 @@ if __name__ == "__main__":
                               default=1)
     parserr_ussr.add_argument('-rd', '--realign_dir', metavar='<str>',
                               help='[Only use when -rr on] Temp directory to realign (default: temp_dir)', type=str,
-                              default='temp_dir')
+                              default='temp_dir_[Time]')
 
     #
 

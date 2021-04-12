@@ -10,6 +10,7 @@ import re
 import os
 from tlog import *
 import Genome_Interval as gi
+import time
 
 
 def trans_contig_name(string_a, char='_'):
@@ -154,7 +155,7 @@ if __name__ == "__main__":
                          default=1)
     parserr.add_argument('-rd', '--realign_dir', metavar='<str>',
                          help='[Only use when -rr on] Temp directory to realign (default: temp_dir)', type=str,
-                         default='temp_dir')
+                         default='temp_dir_[Time]')
     args = vars(parser.parse_args())
     assembly_file = args['assembly_path']
     unalign_table = args['unaln_path']
@@ -192,11 +193,12 @@ if __name__ == "__main__":
         ))
     if realign_step:
         # check temp dir
+        temp_dir = args["realign_dir"] + '_' + time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
         if os.path.isdir(args["realign_dir"]):
-            logging.warning("# {temp_path} exists! It will be rewrited!".format(temp_path=args["realign_dir"]))
+            logging.warning("# {temp_path} exists! It will be rewrited!".format(temp_path=temp_dir))
         else:
             os.mkdir(args["realign_dir"])
-            logging.info("# Realign path is {temp_path}.".format(temp_path=args["realign_dir"]))
+            logging.info("# Realign path is {temp_path}.".format(temp_path=temp_dir))
 
         # map with minimap2
         logging.info("# Start realigning sub sequences to references.")
@@ -215,7 +217,7 @@ if __name__ == "__main__":
             idt_par=minimap2_idt_par,
             ref=args["realign_reference"],
             query=output_fasta,
-            temp_dir=args["realign_dir"],
+            temp_dir=temp_dir,
             temp_paf=temp_paf
         )
         os.system(command)
@@ -223,15 +225,15 @@ if __name__ == "__main__":
         # filter
         temp_out_seq_list_path = "drop_sseq.txt"
         temp_out_seq_filtered_path = "remain_sseq.fa"
-        drop_n = drop_seq_from_paf(args["realign_dir"] + '/' + temp_paf, args["realign_coverage"],
-                                   args["realign_dir"] + '/' + temp_out_seq_list_path)
-        fsr_return_status = gi.fa_some_record(output_fasta, args["realign_dir"] + '/' + temp_out_seq_list_path,
-                                              args["realign_dir"] + '/' + temp_out_seq_filtered_path, exclude=True)
+        drop_n = drop_seq_from_paf(temp_dir + '/' + temp_paf, temp_dir,
+                                   temp_dir + '/' + temp_out_seq_list_path)
+        fsr_return_status = gi.fa_some_record(output_fasta, temp_dir + '/' + temp_out_seq_list_path,
+                                              temp_dir + '/' + temp_out_seq_filtered_path, exclude=True)
         logging.info("# Remove {n} sub sequences similiar to references.".format(n=drop_n))
         # mv and rm temp dir
         logging.info("# Update sub sequences and remove temp files.")
-        os.system('mv {temp_dir}/{temp_fa} {output_fa}'.format(temp_dir=args["realign_dir"],
+        os.system('mv {temp_dir}/{temp_fa} {output_fa}'.format(temp_dir=temp_dir,
                                                                temp_fa=temp_out_seq_filtered_path,
                                                                output_fa=output_fasta))
-        os.system('rm -rf {temp_dir}'.format(temp_dir=args["realign_dir"]))
+        os.system('rm -rf {temp_dir}'.format(temp_dir=temp_dir))
         logging.info("# Realign step is finished.")
