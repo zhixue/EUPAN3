@@ -1,7 +1,7 @@
-# TGSEUPAN
+# EUPAN3
 
 ## 1. Introduction
-TGSEUPAN is a Third Generation Sequencing EUkaryote Pan-genome ANalysis toolkit.
+EUPAN3 is a EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing.
 
 
 ## 2. Install
@@ -10,7 +10,7 @@ TGSEUPAN is a Third Generation Sequencing EUkaryote Pan-genome ANalysis toolkit.
 
 ## 3. Usage
 ```
-usage: tgseupan.py [-h] [-v] {assemsta,unalnsseq} ...
+usage: eupan3.py [-h] [-v] {assemsta,unalnsseq} ...
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -28,7 +28,7 @@ sub commands:
 
 ### 3.1 assemsta
 ```
-usage: tgseupan.py assemsta [-h] -a <assembly.fa> -r <reference.fa> -o
+usage: eupan3.py assemsta [-h] -a <assembly.fa> -r <reference.fa> -o
                             <output_directory> [-q <quast.py>] [-t <int>]
                             [-l <int>] [-g <reference.gff>] [-i <int>]
                             [--large_genome]
@@ -60,7 +60,7 @@ quast parameters:
 ```
 ### 3.2 unalnsseq
 ```
-usage: tgseupan.py unalnsseq [-h] -a <assembly.fa> -u <unaligned.info> -o
+usage: eupan3.py unalnsseq [-h] -a <assembly.fa> -u <unaligned.info> -o
                              <output.fa> [-l <int>] [-k <str>] [-s <str>]
                              [-rr <reference.fa>] [-ri <int>] [-rc <int>]
                              [-rm <minimap2_path>] [-rt <int>] [-rd <str>]
