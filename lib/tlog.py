@@ -13,5 +13,3 @@ logging.basicConfig(level=logging.INFO,
                     # filename='{subcmd}.log'.format(subcmd=sys.argv[0].split('/')[-1].split('.')[0]),
                     # filemode='w'
                     )
-
-

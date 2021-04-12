@@ -32,7 +32,7 @@ class GInterval(object):
         return str(self.region)
 
     def getsubseq(self, seq, maxchar_in_one_line=0):
-        subseq = seq[self.lower_bound-1:self.upper_bound]
+        subseq = seq[self.lower_bound - 1:self.upper_bound]
         if maxchar_in_one_line == 0:
             return subseq
         else:
@@ -40,7 +40,8 @@ class GInterval(object):
 
 
 class GIntervalList(object):
-    def __init__(self, regions_string, sep_intervals=',', sep_bounds='-', base_0=False, right_closed_interval=True, min_len=2):
+    def __init__(self, regions_string,
+                 sep_intervals=',', sep_bounds='-', base_0=False, right_closed_interval=True, min_len=2):
         # 1,2|3,5
         coordinates = []
         if regions_string != '':
@@ -59,7 +60,10 @@ class GIntervalList(object):
         self.sep_bounds = sep_bounds
 
     def __str__(self):
-        return self.sep_intervals.join([self.sep_bounds.join([str(x.lower_bound), str(x.upper_bound)]) for x in self.intervals])
+        return self.sep_intervals.join([
+            self.sep_bounds.join(
+                [str(x.lower_bound), str(x.upper_bound)]
+            ) for x in self.intervals])
 
     def update_count(self):
         self.count = len(self.intervals)
@@ -79,7 +83,10 @@ def filter_length(interval_list, min_len=500):
     filtered_string = ''
     for i in range(interval_list.count):
         if interval_list.intervals[i].length >= min_len:
-            filtered_string += str(interval_list.intervals[i].lower_bound) + interval_list.sep_bounds + str(interval_list.intervals[i].upper_bound) + interval_list.sep_intervals
+            filtered_string += str(interval_list.intervals[i].lower_bound) + \
+                               interval_list.sep_bounds + \
+                               str(interval_list.intervals[i].upper_bound) + \
+                               interval_list.sep_intervals
     return GIntervalList(filtered_string.rstrip(interval_list.sep_intervals))
 
 
@@ -121,9 +128,13 @@ def union_length(interval_list, overlap=True):
     if interval_list.count == 0:
         return count_length
     for i in range(1, interval_list.count):
-        if interval_list.intervals[i-1].upper_bound > interval_list.intervals[i].upper_bound:
-            interval_list.intervals[i] = GInterval([interval_list.intervals[i].lower_bound, interval_list.intervals[i-1].upper_bound])
-        count_length += interval_list.intervals[i-1].length - max(0, interval_list.intervals[i-1].upper_bound - interval_list.intervals[i].lower_bound + 1)
+        if interval_list.intervals[i - 1].upper_bound > interval_list.intervals[i].upper_bound:
+            interval_list.intervals[i] = GInterval(
+                [interval_list.intervals[i].lower_bound, interval_list.intervals[i - 1].upper_bound]
+            )
+        count_length += \
+            interval_list.intervals[i - 1].length - \
+            max(0, interval_list.intervals[i - 1].upper_bound - interval_list.intervals[i].lower_bound + 1)
     # final one
     count_length += interval_list.intervals[-1].length
     return count_length
@@ -155,7 +166,9 @@ def intersect_interval(interval_list1, interval_list2):
         a1, a2 = interval_list1.intervals[i].lower_bound, interval_list1.intervals[i].upper_bound
         b1, b2 = interval_list2.intervals[j].lower_bound, interval_list2.intervals[j].upper_bound
         if b2 >= a1 and a2 >= b1:
-            intersect_string += str(max(a1, b1)) + interval_list1.sep_bounds + str(min(a2, b2)) + interval_list1.sep_intervals
+            intersect_string += str(max(a1, b1)) + \
+                                interval_list1.sep_bounds + str(min(a2, b2)) + \
+                                interval_list1.sep_intervals
         if b2 < a2:
             j += 1
         else:
@@ -163,8 +176,7 @@ def intersect_interval(interval_list1, interval_list2):
     return GIntervalList(intersect_string.rstrip(interval_list1.sep_intervals))
 
 
-## sequence and fasta filter
-
+# sequence and fasta filter
 def add_newline(seq, maxchar_in_one_line=60, endnewline=True):
     newseq = ''
     seqlen = len(seq)
@@ -189,7 +201,7 @@ def fa_some_record(infa_file, ctg_list_file, outfa_file, exclude=False):
             ctg_list += [line.rstrip().split()[0]]
             ctg_list_recond_n += 1
     # read fasta
-    Write_Flag = exclude
+    write_flag = exclude
     with open(outfa_file, 'w') as fout:
         with open(infa_file) as fin:
             for line in fin:
@@ -197,16 +209,16 @@ def fa_some_record(infa_file, ctg_list_file, outfa_file, exclude=False):
                     infa_record_n += 1
                     if line[1:].rstrip().split()[0] in ctg_list:
                         if exclude:
-                            Write_Flag = 0
+                            write_flag = 0
                         else:
-                            Write_Flag = 1
+                            write_flag = 1
                             outfa_record_n += 1
                     else:
                         if exclude:
-                            Write_Flag = 1
+                            write_flag = 1
                             outfa_record_n += 1
                         else:
-                            Write_Flag = 0
-                if Write_Flag:
+                            write_flag = 0
+                if write_flag:
                     fout.write(line)
     return infa_record_n, ctg_list_recond_n, outfa_record_n

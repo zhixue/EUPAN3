@@ -3,7 +3,7 @@
 """
     @Author: Hongzhang Xue
     @Modified: 2021/4/8 2:30 PM
-    @Usage:
+    @Usage: python3 eupan3.py command [options]
 """
 import argparse
 import os
@@ -22,11 +22,9 @@ if __name__ == "__main__":
 
     sub_parser = parser.add_subparsers(dest='subcmd', title='sub commands')
     # AssemSta
-
     parser_as = sub_parser.add_parser("assemsta", help='Use Quast to get assembled contigs/scaffolds to reference to '
                                                        'check the statistics  (The script will call QUAST program, '
                                                        'so the directory where quast.py locates is needed.)')
-    # parser_as.add_argument('args', nargs='+')
     parser_as.add_argument('-a', '--assembly_path', metavar='<assembly.fa>',
                            help='Path of contigs or scaffolds', type=str, required=True)
     parser_as.add_argument('-r', '--reference_path', metavar='<reference.fa>',
@@ -51,56 +49,56 @@ if __name__ == "__main__":
     parser_asq.add_argument('--large_genome', default=False, action='store_true',
                             help='Use optimal parameters for evaluation of large genomes (typically > 100 Mbp)')
 
-    # UnalnSubSeq
-    parser_uss = sub_parser.add_parser("unalnsseq",
-                                       help="Get partial/full/all unaligned sub sequences of contigs/scaffolds from "
+    # UnalnBlockSeq
+    parser_ubs = sub_parser.add_parser("unalnsseq",
+                                       help="Get partial/full/all unaligned block sequences of contigs/scaffolds from "
                                             "Quast")
-    parser_uss.add_argument('-a', '--assembly_path', metavar='<assembly.fa>',
+    parser_ubs.add_argument('-a', '--assembly_path', metavar='<assembly.fa>',
                             help='Path of contigs or scaffolds', type=str, required=True)
-    parser_uss.add_argument('-u', '--unaln_path', metavar='<unaligned.info>',
+    parser_ubs.add_argument('-u', '--unaln_path', metavar='<unaligned.info>',
                             help='Path of unaligned table (at quast_output/contigs_reports/contigs_report_xxx.unaligned'
                                  '.info)',
                             type=str, required=True)
-    parser_uss.add_argument('-o', '--output_path', metavar='<output.fa>',
+    parser_ubs.add_argument('-o', '--output_path', metavar='<output.fa>',
                             help='Path of output unaln sequences', type=str, required=True)
-    parser_uss.add_argument('-l', '--length_filter', metavar='<int>',
-                            help='Min length of sub sequences to consider (default: 500)', type=int, default=500)
-    parser_uss.add_argument('-k', '--kind_unaln', metavar='<str>',
+    parser_ubs.add_argument('-l', '--length_filter', metavar='<int>',
+                            help='Min length of block sequences to consider (default: 500)', type=int, default=500)
+    parser_ubs.add_argument('-k', '--kind_unaln', metavar='<str>',
                             help='Use full/partial/all unaligned sequences (choices: full/partial/all. default: all)',
                             choices=['full', 'partial', 'all'], type=str, default='all')
-    parser_uss.add_argument('-s', '--sample_tag', metavar='<str>',
+    parser_ubs.add_argument('-s', '--sample_tag', metavar='<str>',
                             help='Add sample tag before each contig/scaffold \
                             (default: None, e.g. -s Sample1 , "_" will be used, Chr1 -> Sample1_Chr1)', type=str,
                             default='')
-    parser_uss.add_argument('-n', '--nbase_ignore', metavar='<int>',
-                            help='Max percentage of N bases in sub sequences to ignore (default: 100)',
+    parser_ubs.add_argument('-n', '--nbase_ignore', metavar='<int>',
+                            help='Max percentage of N bases in block sequences to ignore (default: 100)',
                             type=int, default=100)
-    parserr_ussr = parser_uss.add_argument_group('realign parameters')
-    parserr_ussr.add_argument('-rr', '--realign_reference', metavar='<reference.fa>',
+    parserr_ubsr = parser_ubs.add_argument_group('realign parameters')
+    parserr_ubsr.add_argument('-rr', '--realign_reference', metavar='<reference.fa>',
                               help='Using minimap2 to realign  to reference genome/mitochondrion/plastid and drop high '
-                                   'similar unaligned sub sequences',
+                                   'similar unaligned block sequences',
                               type=str, default='')
-    parserr_ussr.add_argument('-ri', '--realign_identity', metavar='<int>',
+    parserr_ubsr.add_argument('-ri', '--realign_identity', metavar='<int>',
                               help='[Only use when -rr on] Min alignment identity of sequences in realign step ('
                                    'choices: '
                                    '80/90/95. default: 90)',
                               type=int, choices=[80, 90, 95],
                               default=90)
-    parserr_ussr.add_argument('-rc', '--realign_coverage', metavar='<int>',
+    parserr_ubsr.add_argument('-rc', '--realign_coverage', metavar='<int>',
                               help='[Only use when -rr on] Min alignment coverage of sequences (default: 80)',
                               type=int,
                               default=80)
-    parserr_ussr.add_argument('-rm', '--realign_minimap2', metavar='<minimap2_path>',
+    parserr_ubsr.add_argument('-rm', '--realign_minimap2', metavar='<minimap2_path>',
                               help='[Only use when -rr on] Path of minimap2 (default: minimap2 in $PATH)', type=str,
                               default='minimap2')
-    parserr_ussr.add_argument('-rt', '--realign_thread', metavar='<int>',
+    parserr_ubsr.add_argument('-rt', '--realign_thread', metavar='<int>',
                               help='[Only use when -rr on] Number of threads using minimap2 (default: 1)', type=int,
                               default=1)
-    parserr_ussr.add_argument('-rd', '--realign_dir', metavar='<str>',
+    parserr_ubsr.add_argument('-rd', '--realign_dir', metavar='<str>',
                               help='[Only use when -rr on] Temp directory to realign (default: temp_dir)', type=str,
                               default='temp_dir_[Time]')
 
-    #
+    # RmRedunant
 
     if len(sys.argv[1:]) == 0:
         parser.print_help()

@@ -3,11 +3,12 @@
 """
     @Author: Hongzhang Xue
     @Modified: 2021/4/8 9:40 PM
-    @Usage:
+    @Usage: python3 assemsta.py [options]
 """
 import argparse
 from tlog import *
 import os
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Use Quast to get assembled contigs/scaffolds to reference and to 
