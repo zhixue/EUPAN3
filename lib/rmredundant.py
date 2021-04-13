@@ -11,7 +11,6 @@ import os
 import sys
 import Genome_Interval as gi
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Cluster the sequences and remove redundant sequences''')
     parser.add_argument('-i', '--input_fa', metavar='<input.fa>',
@@ -81,7 +80,7 @@ if __name__ == "__main__":
                                     thread=args["thread"],
                                     in_fa=args["input_fa"],
                                     clust_fa=clust_fa,
-                                    idt=float(args["sequence_identity"])/100)
+                                    idt=float(args["sequence_identity"]) / 100)
         logging.info("# Cluster block sequences with command: {command}".format(command=command))
         os.system(command)
         logging.info("# Finish clustering block.")
@@ -112,12 +111,14 @@ if __name__ == "__main__":
                                                                        blastout=blast_out,
                                                                        thread=args["thread"])
         logging.info("# Blast block sequences with command: {command}".format(command=command))
-        os.system(command)
+        #### os.system(command)
         logging.info("# Finish blast.")
         # run blastcluster
         dir_name, file_name = os.path.split(os.path.abspath(sys.argv[0]))
-        command = "perl " + dir_name + '/' + "lib/blastCluster.pl " + ' '.join([args["input_fa"],
-                                                                                str(args["sequence_identity"]),
-                                                                                blast_out,
-                                                                                clust_fa])
+        command = "perl " + dir_name + '/' + "blastCluster.pl " + ' '.join([args["input_fa"],
+                                                                            str(args["sequence_identity"]),
+                                                                            blast_out,
+                                                                            clust_fa])
+        logging.info("# Cluster block sequences using blast results.")
+        os.system(command)
         logging.info("# Finish clustering.")
