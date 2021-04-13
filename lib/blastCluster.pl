@@ -12,7 +12,9 @@ qlen slen length qstart qend sstart send pident evalue\" -max_target_seqs 1000\"
 
 die $usage if @ARGV!=4;
 my ($fa,$IDEN,$blast_out,$prefix)=@ARGV;
-
+if ($IDEN>1){
+    $IDEN/=100;
+}
 my %seq=readfa($fa);
 my %seqL=readLength($fa);
 

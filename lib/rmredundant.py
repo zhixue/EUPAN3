@@ -119,6 +119,6 @@ if __name__ == "__main__":
                                                                             str(args["sequence_identity"]),
                                                                             blast_out,
                                                                             clust_fa])
-        logging.info("# Cluster block sequences using blast results.")
+        logging.info("# Cluster block sequences using blast results with command: {command}".format(command=command))
         os.system(command)
         logging.info("# Finish clustering.")
