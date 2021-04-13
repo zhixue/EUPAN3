@@ -11,6 +11,7 @@ import os
 import sys
 import Genome_Interval as gi
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Cluster the sequences and remove redundant sequences''')
     parser.add_argument('-i', '--input_fa', metavar='<input.fa>',
