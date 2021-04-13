@@ -154,8 +154,8 @@ if __name__ == "__main__":
                          help='[Only use when -rr on] Number of threads using minimap2 (default: 1)', type=int,
                          default=1)
     parserr.add_argument('-rd', '--realign_dir', metavar='<str>',
-                         help='[Only use when -rr on] Temp directory to realign (default: temp_dir)', type=str,
-                         default='temp_dir_[Time]')
+                         help='[Only use when -rr on] Temp directory to realign (default: unalnbseq_temp_[Time])',
+                         type=str, default='unalnbseq_temp')
     args = vars(parser.parse_args())
     assembly_file = args['assembly_path']
     unalign_table = args['unaln_path']

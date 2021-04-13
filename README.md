@@ -5,8 +5,13 @@ EUPAN3 is a EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing.
 
 
 ## 2. Install
-
-
+### Dependency
+* [Quast](https://github.com/ablab/quast) (>=v5.0.2)
+* [Minimap2](https://github.com/lh3/minimap2) (>=v2.17)
+* [Cd-hit](https://github.com/weizhongli/cdhit) (>=v4.8.1)
+* [Gclust](https://github.com/niu-lab/gclust) (>=v1.0)
+* [Blast](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) (>=2.11.0)
+### 
 
 ## 3. Usage
 ```
@@ -105,4 +110,24 @@ realign parameters:
   -rd <str>, --realign_dir <str>
                         [Only use when -rr on] Temp directory to realign
                         (default: temp_dir)
+```
+
+### 3.3 mergebseq
+```
+usage: eupan3.py mergebseq [-h] [-o <output.fa>] [--allow_samectg]
+                           input_fa [input_fa ...]
+
+positional arguments:
+  input_fa              Path of input fasta
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o <output.fa>, --output <output.fa>
+                        Path of output fasta
+  --allow_samectg       Allow the sample contig/scaffold name
+```
+
+### 3.4 rmredundant
+```
+
 ```

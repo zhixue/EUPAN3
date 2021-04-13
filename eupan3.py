@@ -107,7 +107,19 @@ if __name__ == "__main__":
                            help='Path of input fasta', type=str)
 
     # RmRedunant
-
+    parser_ms = sub_parser.add_parser("rmredundant", help='''Cluster the sequences and remove redundant sequences''')
+    parser_ms.add_argument('-i', '--input_fa', metavar='<input.fa>',
+                           help='Path of input fasta', type=str, required=True)
+    parser_ms.add_argument('-o', '--output_dir', metavar='<output_dir>',
+                           help='Path of output directory', type=str, default='Rmredundant_output')
+    parser_ms.add_argument('-c', '--sequence_identity', metavar='<int>',
+                           help='Sequence identity threshold (default: 90)', type=int, default=90)
+    parser_ms.add_argument('-m', '--method_path', metavar='<cluter_method_path>',
+                           help='Path of cluster method, support gclust/cd-hit-est/blastn (default: gclust in $PATH)',
+                           type=str, default='gclust')
+    parser_ms.add_argument('-t', '--thread', metavar='<int>',
+                           help=' Number of threads when clustering (default: 1)', type=int,
+                           default=1)
     if len(sys.argv[1:]) == 0:
         parser.print_help()
         exit()

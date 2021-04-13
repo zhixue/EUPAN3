@@ -10,10 +10,9 @@ from tlog import *
 import os
 import glob
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Merge the block sequences from many files''')
-    parser.add_argument('-o', '--output', metavar='<output.fa>',
+    parser.add_argument('-o', '--output_fa', metavar='<output.fa>',
                         help='Path of output fasta', type=str, default='merged_unaln.fa')
     parser.add_argument('--allow_samectg', action='store_true',
                         help='Allow the sample contig/scaffold name', default=False)
@@ -45,6 +44,6 @@ if __name__ == "__main__":
                         fout.write(line)
                     logging.info("# Load {file} with {n} block sequences.".format(file=in_file, n=ctg_n_in_this_file))
         logging.info("# Total load {file_n} input files, with {ctg_n} block sequences.".format(file_n=open_in_file_n,
-                                                                                         ctg_n=len(visited_ctg)))
+                                                                                               ctg_n=len(visited_ctg)))
     except Exception as e:
         logging.error(e)

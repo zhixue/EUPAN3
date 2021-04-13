@@ -222,3 +222,35 @@ def fa_some_record(infa_file, ctg_list_file, outfa_file, exclude=False):
                 if write_flag:
                     fout.write(line)
     return infa_record_n, ctg_list_recond_n, outfa_record_n
+
+
+def gclust2fa(fasta_file, clust_file, out_fa):
+    if fasta_file == out_fa:
+        return 0
+    representative_ctgs = dict()
+    representative_n = 0
+    with open(clust_file) as f:
+        for line in f:
+            if line.startswith('>'):
+                representative_n += 1
+            else:
+                temp = line.rstrip().split()
+                if temp[-1] == '*':
+                    representative = 1
+                else:
+                    representative = 0
+                if representative == 1:
+                    ctgname = temp[2].rstrip('.')
+                    representative_ctgs[ctgname] = ''
+    out_flag = 0
+    with open(out_fa, 'w') as fout:
+        with open(fasta_file) as f:
+            for line in f:
+                if line.startswith('>'):
+                    if line.rstrip().split()[0] in representative_ctgs:
+                        out_flag = 1
+                    else:
+                        out_flag = 0
+                if out_flag == 1:
+                    fout.write(line)
+    return representative_n
