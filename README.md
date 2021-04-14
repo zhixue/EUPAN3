@@ -129,5 +129,20 @@ optional arguments:
 
 ### 3.4 rmredundant
 ```
+usage: eupan3.py rmredundant [-h] -i <input.fa> [-o <output_dir>] [-c <int>]
+                             [-m <cluter_method_path>] [-t <int>]
 
+optional arguments:
+  -h, --help            show this help message and exit
+  -i <input.fa>, --input_fa <input.fa>
+                        Path of input fasta
+  -o <output_dir>, --output_dir <output_dir>
+                        Path of output directory
+  -c <int>, --sequence_identity <int>
+                        Sequence identity threshold (default: 90)
+  -m <cluter_method_path>, --method_path <cluter_method_path>
+                        Path of cluster method, support gclust/cd-hit-
+                        est/blastn (default: gclust in $PATH)
+  -t <int>, --thread <int>
+                        Number of threads when clustering (default: 1)
 ```
