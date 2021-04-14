@@ -86,3 +86,16 @@ if __name__ == "__main__":
                                                                                   taxn=load_tax_n,
                                                                                   acc2taxn=successacc2taxid_n))
     # filter tax
+    filtered_seq_path = args["output_dir"] + '/' + "nocontamination.fa"
+    droped_seq_path = args["output_dir"] + '/' + "contamination.fa"
+    droped_seq_inf_path = args["output_dir"] + '/' + "contamination_information.txt"
+    detectcontamination(blast_out,
+                        acc2tax_out,
+                        args["alignment_identity"],
+                        args["alignment_length"],
+                        args["white_list"],
+                        args["input_fa"],
+                        filtered_seq_path,
+                        droped_seq_path,
+                        droped_seq_inf_path)
+    logging.info("# Finish removing contamination.")
