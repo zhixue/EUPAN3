@@ -54,6 +54,13 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
+    # check output dir
+    if os.path.isdir(args["output_dir"]):
+        logging.warning("# {output_path} exists! It will be rewrited!".format(output_path=args["output_dir"]))
+    else:
+        os.mkdir(args["output_dir"])
+        logging.info("# Output path is {output_path}.".format(output_path=args["output_dir"]))
+
     # blast
     blast_out = args["output_dir"] + '/' + "uniquebseq2nt_blastout.txt"
     command = "{blastn} " \
