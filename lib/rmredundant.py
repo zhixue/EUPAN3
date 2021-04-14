@@ -81,7 +81,7 @@ if __name__ == "__main__":
                                     thread=args["thread"],
                                     in_fa=args["input_fa"],
                                     clust_fa=clust_fa,
-                                    idt=float(args["sequence_identity"])/100)
+                                    idt=float(args["sequence_identity"]) / 100)
         logging.info("# Cluster block sequences with command: {command}".format(command=command))
         os.system(command)
         logging.info("# Finish clustering block.")
@@ -116,8 +116,10 @@ if __name__ == "__main__":
         logging.info("# Finish blast.")
         # run blastcluster
         dir_name, file_name = os.path.split(os.path.abspath(sys.argv[0]))
-        command = "perl " + dir_name + '/' + "lib/blastCluster.pl " + ' '.join([args["input_fa"],
-                                                                                str(args["sequence_identity"]),
-                                                                                blast_out,
-                                                                                clust_fa])
+        command = "perl " + dir_name + '/' + "blastCluster.pl " + ' '.join([args["input_fa"],
+                                                                            str(args["sequence_identity"]),
+                                                                            blast_out,
+                                                                            clust_fa])
+        logging.info("# Cluster block sequences using blast results with command: {command}".format(command=command))
+        os.system(command)
         logging.info("# Finish clustering.")

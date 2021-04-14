@@ -12,7 +12,9 @@ qlen slen length qstart qend sstart send pident evalue\" -max_target_seqs 1000\"
 
 die $usage if @ARGV!=4;
 my ($fa,$IDEN,$blast_out,$prefix)=@ARGV;
-
+if ($IDEN>1){
+    $IDEN/=100;
+}
 my %seq=readfa($fa);
 my %seqL=readLength($fa);
 
@@ -112,7 +114,7 @@ my $f=0;
 while(<IN>){
     chomp;
     if(/^>(.+)$/){
-	if(defined $rep{$1}){
+	if(defined $rep{(split(" ",$1,2))[0]}){
 	    $f=1;
 	    print OUT $_,"\n";
 	}
@@ -130,7 +132,7 @@ sub readfa{
     open(IN,$_[0]);
     while(<IN>){
 	chomp;
-	$h{$1}=1 if(/^>(.+)$/);
+	$h{(split(" ",$1,2))[0]}=1 if(/^>(.+)$/);
     }
     close IN;
     return %h;
@@ -140,14 +142,16 @@ sub readLength{
     my %h;
     open(IN,$_[0]);
     my $name="";
+    my $idn="";
     while(<IN>){
 	chomp;
 	if(/^>(.+)$/){
 	    $name=$1;
-	    $h{$name}=0;
+	    $idn=(split(" ",$1,2))[0];
+	    $h{$idn}=0;
 	}
 	else{
-	    $h{$name}+=length($_);
+	    $h{$idn}+=length($_);
 	}
     }
     close IN;
