@@ -1,11 +1,12 @@
 # python3 getTax.py <accession_file> <accession_col> <acc2taxid> <ranklineage> <outacc2tax.txt>
 # OUTPUT: outacc2tax.txt
 # accession|taxid|lineage_information
-
+import logging
 import sys
+import tlog
 
 
-def overlap(a,b,min_overlap_len=0):
+def overlap(a, b, min_overlap_len=0):
     if a[1] < b[0] + min_overlap_len or a[0] > b[1] - min_overlap_len:
         return 0
     else:
@@ -67,12 +68,21 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
     # load acctax
     acc2tax = dict()
     blackacc = dict()
+    whiteacc_n = 0
     with open(tax_accession_out) as fta:
         for line in fta:
             temp = line.rstrip().split('|')
             acc2tax[temp[0]] = temp[1:]
             if whitelist not in temp[2:]:
                 blackacc[temp[0]] = 1
+            else:
+                whiteacc_n += 1
+    if whiteacc_n == 0:
+        # warning
+        logging.warning("# No hit of white list, "
+                        "which means only contamination exists,"
+                        "please check the input of '-wl,--white_list' !")
+
     # load blastout as filter
     blackquery = dict()  # {(query: {(qstart,qend):acc)}}
     whitequery = dict()  # {(query: {(qstart,qend):acc)}}
@@ -126,7 +136,7 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
                                         toblackseq = 1
                                         accs = set([blackquery[name][region] for region in blackquery[name]])
                                         lineages = ['|'.join(acc2tax[acc]) for acc in accs if acc in acc2tax]
-                                        ft.write('\t'.join([name,','.join(accs), ','.join(lineages)]))
+                                        ft.write('\t'.join([name, ','.join(accs), ','.join(lineages)]))
                             if toblackseq == 1:
                                 fb.write(line)
                             else:
