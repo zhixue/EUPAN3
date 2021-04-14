@@ -111,7 +111,7 @@ if __name__ == "__main__":
                                                                        blastout=blast_out,
                                                                        thread=args["thread"])
         logging.info("# Blast block sequences with command: {command}".format(command=command))
-        #### os.system(command)
+        os.system(command)
         logging.info("# Finish blast.")
         # run blastcluster
         dir_name, file_name = os.path.split(os.path.abspath(sys.argv[0]))
