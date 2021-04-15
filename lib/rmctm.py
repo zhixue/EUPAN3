@@ -40,6 +40,8 @@ if __name__ == "__main__":
                          help='Alignment identity threshold (default: 90)', type=int, default=90)
     parserf.add_argument('-al', '--alignment_length', metavar='<int>',
                          help='Alignment length threshold (default: 100)', type=int, default=100)
+    parserf.add_argument('--force_remove', default=False, action='store_true',
+                         help='Force remove all contamination even if same regions of sequences map to white list')
 
     parserb = parser.add_argument_group('blastn parameters')
     parserb.add_argument('-m', '--blastn_path', metavar='<blastn_path>',
@@ -96,6 +98,10 @@ if __name__ == "__main__":
     filtered_seq_path = args["output_dir"] + '/' + "nocontamination.fa"
     droped_seq_path = args["output_dir"] + '/' + "contamination.fa"
     droped_seq_inf_path = args["output_dir"] + '/' + "contamination_information.txt"
+    if args["force_remove"]:
+        force_remove = 1
+    else:
+        force_remove = 0
     detectcontamination(blast_out,
                         acc2tax_out,
                         args["alignment_identity"],
@@ -104,5 +110,6 @@ if __name__ == "__main__":
                         args["input_fa"],
                         filtered_seq_path,
                         droped_seq_path,
-                        droped_seq_inf_path)
+                        droped_seq_inf_path,
+                        force_remove)
     logging.info("# Finish removing contamination.")

@@ -63,7 +63,8 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
                         fasta_seq,
                         white_seq_path,
                         black_seq_path,
-                        black_table):
+                        black_table,
+                        force_remove):
 
     # load acctax
     acc2tax = dict()
@@ -94,10 +95,10 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
             qstart_idx = 5
             qend_idx = 6
             # high similar record
-            if temp[idt_idx] >= idt and temp[lth_idx] >= lth:
+            if float(temp[idt_idx]) >= idt and float(temp[lth_idx]) >= lth:
                 acc = temp[1].split('.')[0]
-                qstart = temp[qstart_idx]
-                qend = temp[qend_idx]
+                qstart = float(temp[qstart_idx])
+                qend = float(temp[qend_idx])
                 query = temp[0]
                 if acc in blackacc:
                     if query not in blackquery:
@@ -107,19 +108,21 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
                     if query not in whitequery:
                         whitequery[query] = dict()
                     whitequery[query][(qstart, qend)] = acc
-        # remove similar records with region both in white/black query
+
         blackquery_flag = dict()
         for query in blackquery:
             blackquery_flag[query] = 1
-            if query in whitequery:
-                for bregion in blackquery[query]:
-                    if blackquery_flag[query] == 0:
-                        break
-                    for wregion in whitequery[query]:
-                        # at least 10bp overlap
-                        if overlap(bregion, wregion, 10):
-                            blackquery_flag[query] = 0
+            # remove similar records with region both in white/black query
+            if force_remove == 0:
+                if query in whitequery:
+                    for bregion in blackquery[query]:
+                        if blackquery_flag[query] == 0:
                             break
+                        for wregion in whitequery[query]:
+                            # at least 10bp overlap
+                            if overlap(bregion, wregion, 10):
+                                blackquery_flag[query] = 0
+                                break
 
         # write
         with open(fasta_seq) as f:
@@ -136,7 +139,7 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
                                         toblackseq = 1
                                         accs = set([blackquery[name][region] for region in blackquery[name]])
                                         lineages = ['|'.join(acc2tax[acc]) for acc in accs if acc in acc2tax]
-                                        ft.write('\t'.join([name, ','.join(accs), ','.join(lineages)]))
+                                        ft.write('\t'.join([name, ','.join(accs), ','.join(lineages)]) + '\n')
                             if toblackseq == 1:
                                 fb.write(line)
                             else:
