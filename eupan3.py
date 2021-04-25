@@ -107,19 +107,69 @@ if __name__ == "__main__":
                            help='Path of input fasta', type=str)
 
     # RmRedunant
-    parser_ms = sub_parser.add_parser("rmredundant", help='''Cluster the sequences and remove redundant sequences''')
-    parser_ms.add_argument('-i', '--input_fa', metavar='<input.fa>',
+    parser_rr = sub_parser.add_parser("rmredundant", help='''Cluster the sequences and remove redundant sequences''')
+    parser_rr.add_argument('-i', '--input_fa', metavar='<input.fa>',
                            help='Path of input fasta', type=str, required=True)
-    parser_ms.add_argument('-o', '--output_dir', metavar='<output_dir>',
+    parser_rr.add_argument('-o', '--output_dir', metavar='<output_dir>',
                            help='Path of output directory', type=str, default='Rmredundant_output')
-    parser_ms.add_argument('-c', '--sequence_identity', metavar='<int>',
+    parser_rr.add_argument('-c', '--sequence_identity', metavar='<int>',
                            help='Sequence identity threshold (default: 90)', type=int, default=90)
-    parser_ms.add_argument('-m', '--method_path', metavar='<cluter_method_path>',
+    parser_rr.add_argument('-m', '--method_path', metavar='<cluter_method_path>',
                            help='Path of cluster method, support gclust/cd-hit-est/blastn (default: gclust in $PATH)',
                            type=str, default='gclust')
-    parser_ms.add_argument('-t', '--thread', metavar='<int>',
+    parser_rr.add_argument('-t', '--thread', metavar='<int>',
                            help=' Number of threads when clustering (default: 1)', type=int,
                            default=1)
+    # rmCtm
+    parser_rc = sub_parser.add_parser("rmctm", help='''Detect and discard the potentail contaminated sequences''')
+    parser_rc.add_argument('-i', '--input_fa', metavar='<input.fa>',
+                           help='Path of input fasta', type=str, required=True)
+    parser_rc.add_argument('-o', '--output_dir', metavar='<output_dir>',
+                           help='Path of output directory', type=str, default='Rmctm_output')
+    parser_rc.add_argument('--rewrite', default=False, action='store_true',
+                           help='Rewrite the blastout in output directory')
+    parsert_rc = parser_rc.add_argument_group('database parameters')
+    parsert_rc.add_argument('-nt', '--nt', metavar='<nt_path>',
+                            help='Path of nt (download and decompress from '
+                                 'https://ftp.ncbi.nih.gov/blast/db/FASTA/nt.gz)',
+                            required=True)
+    parsert_rc.add_argument('-at', '--at', metavar='<accession2taxid_path>',
+                            help='Path of accession2taxid (download and decompress from '
+                                 'https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz)',
+                            required=True)
+    parsert_rc.add_argument('-rl', '--rl', metavar='<rankedlineage_path>',
+                            help='Path of rankedlineage (download and decompress from '
+                                 'https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz)', required=True)
+    parserf_rc = parser_rc.add_argument_group('filter parameters')
+    parserf_rc.add_argument('-wl', '--white_list', metavar='<str>',
+                            help='legal tax, others will be considered as contamination (default: Viridiplantae)',
+                            type=str, default='Viridiplantae')
+    parserf_rc.add_argument('-ai', '--alignment_identity', metavar='<int>',
+                            help='Alignment identity threshold (default: 90)', type=int, default=90)
+    parserf_rc.add_argument('-al', '--alignment_length', metavar='<int>',
+                            help='Alignment length threshold (default: 100)', type=int, default=100)
+    parserf_rc.add_argument('--force_remove', default=False, action='store_true',
+                            help='Force remove all contamination even if same regions of sequences map to white list')
+    parserb_rc = parser_rc.add_argument_group('blastn parameters')
+    parserb_rc.add_argument('-m', '--blastn_path', metavar='<blastn_path>',
+                            help='Path of blastn (default: blastn in $PATH)',
+                            type=str, default='blastn')
+    parserb_rc.add_argument('-e', '--evalue', metavar='<float>',
+                            help='E-value threshold of blastn (default: 1e-5)',
+                            type=float, default=1e-5)
+    parserb_rc.add_argument('-t', '--thread', metavar='<int>',
+                            help=' Number of threads when blastn, recommend less than 4 (default: 1)', type=int,
+                            default=1)
+
+    # fastaSta
+    parser_fs = sub_parser.add_parser("fastasta", help='''Calculate statistics of fasta file (DNA)''')
+    parser_fs.add_argument('-i', '--input_path', metavar='<input.fa>',
+                           help='Path of input fasta file', type=str, required=True)
+    parser_fs.add_argument('-o', '--output_path', metavar='<output.fa>',
+                           help='Path of output fasta file', type=str, required=True)
+    parser_fs.add_argument('-l', '--length_filter', metavar='<int>',
+                           help='Min length of sequences to consider (default: 500)', type=int, default=500)
+
     if len(sys.argv[1:]) == 0:
         parser.print_help()
         exit()
