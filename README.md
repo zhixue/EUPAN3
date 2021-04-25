@@ -146,3 +146,67 @@ optional arguments:
   -t <int>, --thread <int>
                         Number of threads when clustering (default: 1)
 ```
+
+### 3.5 rmctm
+```
+usage: eupan3.py rmctm [-h] -i <input.fa> [-o <output_dir>] [--rewrite] -nt
+                       <nt_path> -at <accession2taxid_path> -rl
+                       <rankedlineage_path> [-wl <str>] [-ai <int>]
+                       [-al <int>] [--force_remove] [-m <blastn_path>]
+                       [-e <float>] [-t <int>]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i <input.fa>, --input_fa <input.fa>
+                        Path of input fasta
+  -o <output_dir>, --output_dir <output_dir>
+                        Path of output directory
+  --rewrite             Rewrite the blastout in output directory
+
+database parameters:
+  -nt <nt_path>, --nt <nt_path>
+                        Path of nt (download and decompress from
+                        https://ftp.ncbi.nih.gov/blast/db/FASTA/nt.gz)
+  -at <accession2taxid_path>, --at <accession2taxid_path>
+                        Path of accession2taxid (download and decompress from
+                        https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/
+                        nucl_gb.accession2taxid.gz)
+  -rl <rankedlineage_path>, --rl <rankedlineage_path>
+                        Path of rankedlineage (download and decompress from ht
+                        tps://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_ta
+                        xdump.tar.gz)
+
+filter parameters:
+  -wl <str>, --white_list <str>
+                        legal tax, others will be considered as contamination
+                        (default: Viridiplantae)
+  -ai <int>, --alignment_identity <int>
+                        Alignment identity threshold (default: 90)
+  -al <int>, --alignment_length <int>
+                        Alignment length threshold (default: 100)
+  --force_remove        Force remove all contamination even if same regions of
+                        sequences map to white list
+
+blastn parameters:
+  -m <blastn_path>, --blastn_path <blastn_path>
+                        Path of blastn (default: blastn in $PATH)
+  -e <float>, --evalue <float>
+                        E-value threshold of blastn (default: 1e-5)
+  -t <int>, --thread <int>
+                        Number of threads when blastn, recommend less than 4
+                        (default: 1)
+```
+
+### 3.6 fastasta
+```
+usage: eupan3.py fastasta [-h] -i <input.fa> -o <output.fa> [-l <int>]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i <input.fa>, --input_path <input.fa>
+                        Path of input fasta file
+  -o <output.fa>, --output_path <output.fa>
+                        Path of output fasta file
+  -l <int>, --length_filter <int>
+                        Min length of sequences to consider (default: 500)
+```
