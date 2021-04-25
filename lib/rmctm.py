@@ -70,6 +70,9 @@ if __name__ == "__main__":
               "-db {dbidx} " \
               "-out {blastout} " \
               "-evalue 1e-5 " \
+              "-best_hit_overhang 0.25 " \
+              "-max_target_seqs 10 " \
+              "-perc_identity 0.5 " \
               "-outfmt '6 qacc sacc qlen slen length qstart qend sstart send pident evalue' " \
               "-num_threads {thread}".format(blastn=args["blastn_path"],
                                              in_fa=args["input_fa"],
