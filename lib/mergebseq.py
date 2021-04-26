@@ -20,14 +20,14 @@ if __name__ == "__main__":
                         help='Path of input fasta', type=str)
     args = vars(parser.parse_args())
     try:
-        if os.path.isfile(args['output']):
-            logging.warning("# {output} exists! It will be rewrited!".format(output=args['output']))
+        if os.path.isfile(args['output_fa']):
+            logging.warning("# {output} exists! It will be rewrited!".format(output=args['output_fa']))
         visited_ctg = dict()
         in_files = args['input_fa']
         if len(in_files) == 1:
             in_files = glob.glob(in_files[0])
         open_in_file_n = 0
-        with open(args['output'], 'w') as fout:
+        with open(args['output_fa'], 'w') as fout:
             for in_file in in_files:
                 with open(in_file) as fin:
                     ctg_n_in_this_file = 0

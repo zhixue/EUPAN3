@@ -50,7 +50,7 @@ if __name__ == "__main__":
                             help='Use optimal parameters for evaluation of large genomes (typically > 100 Mbp)')
 
     # UnalnBlockSeq
-    parser_ubs = sub_parser.add_parser("unalnsseq",
+    parser_ubs = sub_parser.add_parser("unalnbseq",
                                        help="Get partial/full/all unaligned block sequences of contigs/scaffolds from "
                                             "Quast")
     parser_ubs.add_argument('-a', '--assembly_path', metavar='<assembly.fa>',
