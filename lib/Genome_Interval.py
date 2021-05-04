@@ -9,7 +9,7 @@
 
 class GInterval(object):
     # region legal: list, tuple, string
-    def __init__(self, region, base_0=False, right_closed_interval=True):
+    def __init__(self, region, chrn='', sdepth=0, base_0=False, right_closed_interval=True):
         if isinstance(region, list) or isinstance(region, tuple):
             self.lower_bound = region[0]
             self.upper_bound = region[1]
@@ -27,9 +27,16 @@ class GInterval(object):
             self.upper_bound += 1
         self.region = [self.lower_bound, self.upper_bound]
         self.length = self.upper_bound - self.lower_bound + 1
+        self.chrn = chrn
+        if sdepth >= 1:
+            self.sumcov = self.length
+            self.sumdepth = sdepth
+        else:
+            self.sumcov = 0
+            self.sumdepth = 0
 
     def __str__(self):
-        return str(self.region)
+        return str(self.chrn) + ':' + str(self.region)
 
     def getsubseq(self, seq, maxchar_in_one_line=0):
         subseq = seq[self.lower_bound - 1:self.upper_bound]
@@ -38,21 +45,59 @@ class GInterval(object):
         else:
             return add_newline(subseq, maxchar_in_one_line, endnewline=False)
 
+    def overlap_length(self, gi_object):
+        if self.lower_bound > gi_object.upper_bound or self.upper_bound < gi_object.lower_bound:
+            return 0
+        else:
+            return min(self.upper_bound, gi_object.upper_bound) - max(self.lower_bound, gi_object.lower_bound) + 1
+
+    def update_sum(self, gi_object):
+        region_overlap_length = self.overlap_length(gi_object)
+        if region_overlap_length == 0:
+            return 0
+        else:
+            self.sumcov += region_overlap_length
+            self.sumdepth += region_overlap_length * gi_object.sumdepth
+            return 1
+
+    def get_cov(self):
+        return self.sumcov / self.length
+
+    def get_depth(self):
+        return self.sumdepth / self.length
+
 
 class GIntervalList(object):
-    def __init__(self, regions_string,
-                 sep_intervals=',', sep_bounds='-', base_0=False, right_closed_interval=True, min_len=2):
+    def __init__(self, regions_string, chrn_string='', depth_tuple=[],
+                 sep_intervals=',', sep_bounds='-', base_0=False, right_closed_interval=True, min_len=1):
         # 1,2|3,5
         coordinates = []
-        if regions_string != '':
-            coordinates = list([coord for coord in regions_string.split(sep_intervals)])
-            coordinates = list([tuple([int(y) for y in x.split(sep_bounds)]) for x in coordinates])
+        if isinstance(regions_string, str):
+            if regions_string != '':
+                coordinates = list([coord for coord in regions_string.split(sep_intervals)])
+                coordinates = list([tuple([int(y) for y in x.split(sep_bounds)]) for x in coordinates])
+        else:
+            coordinates = regions_string
         self.count = len(coordinates)
         intervals = []
-        for i in range(self.count):
-            temp_interval = GInterval(coordinates[i], base_0, right_closed_interval)
-            if temp_interval.length >= min_len:
-                intervals += [temp_interval]
+        if len(depth_tuple) == self.count:
+            for i in range(self.count):
+                temp_interval = GInterval(coordinates[i],
+                                          chrn=chrn_string,
+                                          sdepth=depth_tuple[i],
+                                          base_0=base_0,
+                                          right_closed_interval=right_closed_interval)
+                if temp_interval.length >= min_len:
+                    intervals += [temp_interval]
+        else:
+            for i in range(self.count):
+                temp_interval = GInterval(coordinates[i],
+                                          chrn=chrn_string,
+                                          base_0=base_0,
+                                          right_closed_interval=right_closed_interval)
+                if temp_interval.length >= min_len:
+                    intervals += [temp_interval]
+
         self.intervals = intervals
         self.update_count()
         self.sorted = False
@@ -254,3 +299,141 @@ def gclust2fa(fasta_file, clust_file, out_fa):
                 if out_flag == 1:
                     fout.write(line)
     return representative_n
+
+
+def string2dict(long_string, sep=';', eq='=', rm_quote=False):
+    if rm_quote:
+        long_string = long_string.replace('"', '').replace("'", '')
+    long_string = long_string.replace('; ', ';')
+    out_dict = dict()
+    tmp = long_string.rstrip(sep).split(sep)
+    for i in tmp:
+        key, value = i.split(eq)
+        out_dict[key] = value
+    return out_dict
+
+
+# gff
+class GFFElement(object):
+    def __init__(self, line_string):  # https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
+        self.string = line_string  # including '\n'
+        # type only support: gene, mRNA/transcript, exon, CDS, five_prime_UTR, three_prime_UTR, start_codon, end_codon
+        self.chrn, self.source, self.type, self.start, self.end, \
+        self.score, self.strand, self.phase, self.attributes = line_string.rstrip().split('\t')[:9]
+        self.details = string2dict(self.attributes)
+        # update start, end
+        self.start = int(self.start)
+        self.end = int(self.end)
+        if self.start > self.end:
+            self.start, self.end = self.end, self.start
+        # GInterval.__init__(self, [self.start, self.end])
+
+    def find_parentid(self):
+        parent_id = ''
+        if 'Parent' in self.details:
+            parent_id = self.details['Parent']
+            if parent_id.find(','):  # many parents, return first one
+                return parent_id.split(',')[0]
+        return parent_id
+
+    def get_id(self):
+        return self.details["ID"]
+
+    def get_length(self):
+        return self.end - self.start + 1
+
+
+class GFFTranscript(GFFElement):
+    def __init__(self, transcript_line):
+        GFFElement.__init__(self, transcript_line)
+        self.children = []
+        self.parent = []
+        self.cdslength = 0
+        self.exonlength = 0
+
+    def add_parent(self, gene):
+        self.parent += [gene]
+
+    def add_child(self, element):
+        self.children += [element]
+
+    def get_key_length(self, key='CDS'):
+        sum_len = 0
+        for ele in self.children:
+            if ele.type == key:
+                sum_len += ele.get_length()
+        return sum_len
+
+    def update_length(self):
+        for ele in self.children:
+            if self.type == 'exon':
+                self.exonlength += ele.get_length()
+            elif self.type == 'CDS':
+                self.CDSlength += ele.get_length()
+
+
+class GFFGene(GFFElement):
+    def __init__(self, gene_line):
+        GFFElement.__init__(self, gene_line)
+        self.children = []
+
+    def add_child(self, element):
+        self.children += [element]
+
+
+# gtf
+class GTFElement(object):
+    def __init__(self, line_string):  # https://mblab.wustl.edu/GTF22.html
+        self.string = line_string  # including '\n'
+        # type only support: CDS, start_codon and stop_codon (required)
+        # 5UTR, 3UTR, inter, inter_CNS, intron_CNS and exon (optional)
+        self.chrn, self.source, self.type, self.start, self.end, \
+        self.score, self.strand, self.frame, self.attributes = line_string.rstrip().split('\t')[:9]
+        self.details = string2dict(self.attributes, eq=' ', rm_quote=True)
+        # update start, end
+        self.start = int(self.start)
+        self.end = int(self.end)
+        if self.start > self.end:
+            self.start, self.end = self.end, self.start
+        # GInterval.__init__(self, [self.start, self.end])
+
+    def find_parentid(self):
+        return self.details['transcript_id']
+
+    def get_id(self):
+        return self.details["transcript_id"] + ':' + self.type + '_' + str(self.start) + '-' + str(self.end)
+
+    def get_length(self):
+        return self.end - self.start + 1
+
+
+class GTFVirtual(object):
+    def __init__(self, gtf_elements):
+        self.chrn = gtf_elements[0].chrn
+        self.strand = gtf_elements[0].strand
+        self.cdslength = 0
+        self.exonlength = 0
+        # start ,end
+        self.start = gtf_elements[0].start
+        self.end = gtf_elements[0].end
+        for ele in gtf_elements:
+            if self.end < ele.end:
+                self.end = ele.end
+            if self.start > ele.start:
+                self.start = ele.start
+            '''
+            if self.type == 'exon':
+                self.exonlength += ele.get_length()
+            elif self.type == 'CDS':
+                self.CDSlength += ele.get_length()
+            '''
+        self.children = gtf_elements
+
+    def get_length(self):
+        return self.end - self.start + 1
+
+
+
+
+
+
