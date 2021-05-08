@@ -18,14 +18,14 @@ def seq_statistics(seq_m):
     t_base = seq_m.count('T') + seq_m.count('t')
     c_base = seq_m.count('C') + seq_m.count('c')
     g_base = seq_m.count('G') + seq_m.count('g')
-    n_base = seq_m.count('N') + seq_m.count('n')
-    nonn_base = a_base + t_base + c_base + g_base + n_base
+    # n_base = seq_m.count('N') + seq_m.count('n')
+    nonn_base = a_base + t_base + c_base + g_base
     other_base = all_base - nonn_base
     if nonn_base == 0:
         gc_content = 0
     else:
         gc_content = (c_base + g_base) / nonn_base
-    return all_base, nonn_base, a_base, t_base, c_base, g_base, other_base, gc_content
+    return all_base, nonn_base, a_base, t_base, c_base, g_base, other_base, round(gc_content, 4)
 
 
 def process_fasta(fasta, min_len):
@@ -42,6 +42,8 @@ def process_fasta(fasta, min_len):
                 seq = ''
             else:
                 seq += line.rstrip()
+        # final one
+        seq_summary[ctg] = seq_statistics(seq)
     return seq_summary
 
 
@@ -63,7 +65,7 @@ if __name__ == "__main__":
         logging.warning("# {output_path} exists! It will be rewrited!".format(output_path=args["output_path"]))
     with open(args["output_path"], 'w') as fout:
         # command
-        fout.write('# '+' '.join(sys.argv) + '\n')
+        fout.write('# ' + ' '.join(sys.argv) + '\n')
         # total summary
         total_n = 0
         total_base = 0
@@ -74,16 +76,16 @@ if __name__ == "__main__":
             total_base += fasta_ctg_summary[key][0]
             total_nonnbase += fasta_ctg_summary[key][1]
             total_gc_content += fasta_ctg_summary[key][1] * fasta_ctg_summary[key][-1]
-        total_gc_content = total_gc_content / total_nonnbase
-        summary_log = "# Total {n} sequences, with {base} bases ({nonnbase} bases are not N).\n" \
-                      "# Mean length = {lth}, GC content = {gc}".format(n=total_n,
-                                                                        base=total_base,
-                                                                        nonnbase=total_nonnbase,
-                                                                        lth=total_base / total_n,
-                                                                        gc=total_gc_content)
+        total_gc_content = round(total_gc_content / total_nonnbase, 4)
+        summary_log = "# Total {n} sequences, with {base} bases ({nonnbase} bases are not N). " \
+                      "Mean length = {lth}, GC content = {gc}".format(n=total_n,
+                                                                      base=total_base,
+                                                                      nonnbase=total_nonnbase,
+                                                                      lth=round(total_base / total_n, 1),
+                                                                      gc=total_gc_content)
         logging.info(summary_log)
         summary_header = "#" + '\t'.join(["Seq", "Bases", "NonNBases", "A", "T", "C", "G", "Others", "GCcontent"])
         temp_strings = [summary_log, summary_header]
         for key in fasta_ctg_summary:
             temp_strings += ['\t'.join([key] + [str(x) for x in fasta_ctg_summary[key]])]
-        fout.write('\n'.join(temp_strings))
+        fout.write('\n'.join(temp_strings) + '\n')
