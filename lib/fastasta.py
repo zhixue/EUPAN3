@@ -18,8 +18,8 @@ def seq_statistics(seq_m):
     t_base = seq_m.count('T') + seq_m.count('t')
     c_base = seq_m.count('C') + seq_m.count('c')
     g_base = seq_m.count('G') + seq_m.count('g')
-    n_base = seq_m.count('N') + seq_m.count('n')
-    nonn_base = a_base + t_base + c_base + g_base + n_base
+    # n_base = seq_m.count('N') + seq_m.count('n')
+    nonn_base = a_base + t_base + c_base + g_base
     other_base = all_base - nonn_base
     if nonn_base == 0:
         gc_content = 0
@@ -42,6 +42,8 @@ def process_fasta(fasta, min_len):
                 seq = ''
             else:
                 seq += line.rstrip()
+        # final one
+        seq_summary[ctg] = seq_statistics(seq)
     return seq_summary
 
 
@@ -86,4 +88,4 @@ if __name__ == "__main__":
         temp_strings = [summary_log, summary_header]
         for key in fasta_ctg_summary:
             temp_strings += ['\t'.join([key] + [str(x) for x in fasta_ctg_summary[key]])]
-        fout.write('\n'.join(temp_strings))
+        fout.write('\n'.join(temp_strings) + '\n')
