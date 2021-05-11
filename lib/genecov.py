@@ -208,8 +208,8 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
                                                        round(transcript_depth, 3),
                                                        transcript_ele,
                                                        transcript_ele_region,
-                                                       round(transcript_ele_cov,3),
-                                                       round(transcript_ele_depth,3)
+                                                       round(transcript_ele_cov, 3),
+                                                       round(transcript_ele_depth, 3)
                                                        ]])]
     return outresults
 
@@ -234,8 +234,6 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                 if temp[0] in annotation_dicts[2]:
                     anno_list_obj = GIntervalList(annotation_dicts[2][temp[0]])
                     anno_list_obj.sort()
-                    #if list([(x.lower_bound, x.upper_bound) for x in anno_list_obj.intervals]) == sorted(list([(x.lower_bound, x.upper_bound) for x in anno_list_obj.intervals])):
-                    #    print('sort ok')
                     current_anno_idx = 0
             # bed format
             depth = int(float(temp[3]))  # int error if 1.1e6
