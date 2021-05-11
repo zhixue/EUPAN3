@@ -223,7 +223,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
     header_cols = ["# Sample", "Chr", "Level", "Gene", "Gene_Region", "Gene_Cov", "Gene_Depth",
                    "mRNA", "mRNA_Region", "mRNA_Cov", "mRNA_Depth",
                    "Element", "Element_Region", "Element_Cov", "Element_Depth"]
-    fout.write('\t'.join([header_cols]) + '\n')
+    fout.write('\t'.join(header_cols) + '\n')
     with open(bedfile) as f:
         for line in f:
             temp = line.rstrip().split('\t')
