@@ -178,38 +178,40 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
                         element_cov = 0
                         element_depth = 0
                 outresults += ['\t'.join([str(x) for x in [sample_tag,
+                                                           chrn,
                                                            level,
                                                            gene,
                                                            gene_region,
-                                                           round(gene_cov, 3),
-                                                           round(gene_depth, 3),
+                                                           round(gene_cov, 4),
+                                                           round(gene_depth, 4),
                                                            transcript,
                                                            transcript_region,
-                                                           round(transcript_cov, 3),
-                                                           round(transcript_depth, 3),
+                                                           round(transcript_cov, 4),
+                                                           round(transcript_depth, 4),
                                                            ele,
                                                            element_region,
-                                                           round(element_cov, 3),
-                                                           round(element_depth, 3)
+                                                           round(element_cov, 4),
+                                                           round(element_depth, 4)
                                                            ]])]
             # sum at transcript level
             level = 'mRNA'
             transcript_ele_cov = transcript_ele_sumcov / transcript_ele_sumlength
             transcript_ele_depth = transcript_ele_sumdepth / transcript_ele_sumlength
             outresults += ['\t'.join([str(x) for x in [sample_tag,
+                                                       chrn,
                                                        level,
                                                        gene,
                                                        gene_region,
-                                                       round(gene_cov, 3),
-                                                       round(gene_depth, 3),
+                                                       round(gene_cov, 4),
+                                                       round(gene_depth, 4),
                                                        transcript,
                                                        transcript_region,
-                                                       round(transcript_cov, 3),
-                                                       round(transcript_depth, 3),
+                                                       round(transcript_cov, 4),
+                                                       round(transcript_depth, 4),
                                                        transcript_ele,
                                                        transcript_ele_region,
-                                                       round(transcript_ele_cov, 3),
-                                                       round(transcript_ele_depth, 3)
+                                                       round(transcript_ele_cov, 4),
+                                                       round(transcript_ele_depth, 4)
                                                        ]])]
     return outresults
 
