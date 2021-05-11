@@ -12,6 +12,7 @@ from Genome_Interval import *
 from tlog import *
 import os
 
+
 def readgff(gff, ele_select="CDS"):
     gene_dict = dict()  # {'chr1':{'geneA':{'transcript1':{'CDS1':''}}}}
     ele_dict = dict()  # {'geneA':(start,end)}
@@ -57,7 +58,6 @@ def readgtf(gtf, ele_select="CDS"):
     region_dict = dict()  # {'chr1':{(1,2):['xx']}]}
     current_gene_id = ''
     current_transcript_id = ''
-    current_ele_id = ''
     current_eles = []
     current_transcripts = []
     with open(gtf) as f:
@@ -123,88 +123,165 @@ def readgtf(gtf, ele_select="CDS"):
     return gene_dict, ele_dict, region_dict
 
 
-def compute_cov(cov_region, annotation_dict, chrn, sample_tag):
+def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_tag):
     outresults = []
-    cov_region_intervallist = GIntervalList(cov_region)
-    if not chrn in annotation_dict[0]:
-        return outresults
-    for gene in annotation_dict[0][chrn]:
+    for gene in annotation_dicts[0][chrn]:
         # gene
-        gene_region_intervallist = GIntervalList([annotation_dict[1][gene]])
-        gene_cov_interval = intersect_interval(gene_region_intervallist, cov_region_intervallist)
-        gene_cov = union_length(gene_cov_interval) / union_length(gene_region_intervallist)
+        gene_region = annotation_dicts[1][gene]
+        gene_obj = anno_list_object.get_GI(gene_region)
+        if gene_obj:
+            gene_cov = gene_obj.get_cov()
+            gene_depth = gene_obj.get_depth()
+        else:
+            gene_cov = 0
+            gene_depth = 0
+
         # transcript
-        for transcript in annotation_dict[0][chrn][gene].keys():
-            transcript_region = annotation_dict[1][transcript]
-            transcript_region_intervallist = GIntervalList([transcript_region])
-            if transcript_region_intervallist == gene_region_intervallist:
+        for transcript in annotation_dicts[0][chrn][gene].keys():
+            transcript_region = annotation_dicts[1][transcript]
+            if transcript_region == gene_region:
                 transcript_cov = gene_cov
+                transcript_depth = gene_depth
             else:
-                transcript_cov_interval = intersect_interval(transcript_region_intervallist, cov_region_intervallist)
-                transcript_length = union_length(transcript_region_intervallist)
-                if transcript_length == 0:
+                transcript_obj = anno_list_object.get_GI(transcript_region)
+                if transcript_obj:
+                    transcript_cov = transcript_obj.get_cov()
+                    transcript_depth = transcript_obj.get_depth()
+                else:
                     transcript_cov = 0
-                else:
-                    transcript_cov = union_length(transcript_cov_interval) / transcript_length
+                    transcript_depth = 0
+            transcript_ele_sumcov = 0
+            transcript_ele_sumdepth = 0
+            transcript_ele_sumlength = 0
+            transcript_ele_region = []
+            transcript_ele = []
             # elements
-            elements = annotation_dict[0][chrn][gene][transcript].keys()
-            elements_region = [annotation_dict[1][ele] for ele in elements]
-            element_region_intervallist = GIntervalList(elements_region)
-            if element_region_intervallist == gene_region_intervallist:
-                element_cov = transcript_cov
-            else:
-                element_cov_interval = intersect_interval(element_region_intervallist, cov_region_intervallist)
-                element_length = union_length(element_region_intervallist)
-                if element_length == 0:
-                    element_cov = 0
+            for ele in annotation_dicts[0][chrn][gene][transcript].keys():
+                level = used_region
+                transcript_ele += [ele]
+                element_region = annotation_dicts[1][ele]
+                element_obj = anno_list_object.get_GI(element_region)
+                transcript_ele_region += [element_region]
+                transcript_ele_sumlength += element_obj.length
+                transcript_ele_sumcov += element_obj.sumcov
+                transcript_ele_sumdepth += element_obj.sumdepth
+                # if element_region == (99171, 99793):
+                #    print(element_obj)
+                if element_region == transcript_region:
+                    element_cov = transcript_cov
+                    element_depth = transcript_depth
                 else:
-                    element_cov = union_length(element_cov_interval) / element_length
-            outresults += ['\t'.join([str(x) for x in [gene, transcript, sample_tag, gene_cov, transcript_cov, element_cov]])]
+                    if element_obj:
+                        element_cov = element_obj.get_cov()
+                        element_depth = element_obj.get_depth()
+                    else:
+                        element_cov = 0
+                        element_depth = 0
+                outresults += ['\t'.join([str(x) for x in [sample_tag,
+                                                           level,
+                                                           gene,
+                                                           gene_region,
+                                                           round(gene_cov, 3),
+                                                           round(gene_depth, 3),
+                                                           transcript,
+                                                           transcript_region,
+                                                           round(transcript_cov, 3),
+                                                           round(transcript_depth, 3),
+                                                           ele,
+                                                           element_region,
+                                                           round(element_cov, 3),
+                                                           round(element_depth, 3)
+                                                           ]])]
+            # sum at transcript level
+            level = 'mRNA'
+            transcript_ele_cov = transcript_ele_sumcov / transcript_ele_sumlength
+            transcript_ele_depth = transcript_ele_sumdepth / transcript_ele_sumlength
+            outresults += ['\t'.join([str(x) for x in [sample_tag,
+                                                       level,
+                                                       gene,
+                                                       gene_region,
+                                                       round(gene_cov, 3),
+                                                       round(gene_depth, 3),
+                                                       transcript,
+                                                       transcript_region,
+                                                       round(transcript_cov, 3),
+                                                       round(transcript_depth, 3),
+                                                       transcript_ele,
+                                                       transcript_ele_region,
+                                                       round(transcript_ele_cov,3),
+                                                       round(transcript_ele_depth,3)
+                                                       ]])]
     return outresults
 
 
-def scan_bed(bedfile, annotation_dict, output, sample_tag='', at_least_depth=1, scan_depth=False):
+def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_least_depth=1, scan_depth=True):
     current_chrn = ''
-    current_chrn_covregion = []
-    current_chrn_depthregion = dict()
+    current_anno_idx = 0
     fout = open(output, 'w')
     with open(bedfile) as f:
         for line in f:
             temp = line.rstrip().split('\t')
+            # skip chromosome without annotations
+            if temp[0] not in annotation_dicts[0]:
+                continue
             if temp[0] != current_chrn:
-                # compute
-                temp_results = compute_cov(current_chrn_covregion, annotation_dict, current_chrn, sample_tag)
-                if not temp_results:
-                    fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
-                    fout.flush()
-                current_chrn_covregion = []
-            cov = float(temp[3])  # int error if 1.1e6
+                # get depth, cov
+                if current_chrn != '':
+                    temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
+                    if temp_results:
+                        fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
+                # init for a new chromosome
+                if temp[0] in annotation_dicts[2]:
+                    anno_list_obj = GIntervalList(annotation_dicts[2][temp[0]])
+                    anno_list_obj.sort()
+                    #if list([(x.lower_bound, x.upper_bound) for x in anno_list_obj.intervals]) == sorted(list([(x.lower_bound, x.upper_bound) for x in anno_list_obj.intervals])):
+                    #    print('sort ok')
+                    current_anno_idx = 0
+            # bed format
+            depth = int(float(temp[3]))  # int error if 1.1e6
             current_chrn = temp[0]
             start_pos = int(temp[1]) + 1
             end_pos = int(temp[2])
-            if cov < at_least_depth:
+            # ignore low depth
+            if depth < at_least_depth:
                 continue
-            # update chrn_covregion
-            if not current_chrn_covregion:
-                current_chrn_covregion += [[start_pos, end_pos]]
-            elif start_pos == current_chrn_covregion[-1][1]+1:
-                current_chrn_covregion[-1][1] = end_pos
-            else:
-                current_chrn_covregion += [[start_pos, end_pos]]
+            # update scan pos
+            if end_pos < anno_list_obj.intervals[current_anno_idx].lower_bound:
+                continue
+            # no any scan in current chromosome
+            if current_anno_idx == anno_list_obj.count - 1 and \
+                    start_pos > anno_list_obj.intervals[current_anno_idx].upper_bound:
+                continue
+
+            temp_scan = GInterval((start_pos, end_pos), sdepth=depth)
+            # update anno pos
+            while start_pos > anno_list_obj.intervals[current_anno_idx].upper_bound:
+                if current_anno_idx >= anno_list_obj.count - 1:
+                    break
+                current_anno_idx += 1
+
+            # add sum
+            for i in range(current_anno_idx, anno_list_obj.count):
+                add_flag = anno_list_obj.intervals[i].update_sum(temp_scan)
+                if add_flag == 0 and anno_list_obj.intervals[i].lower_bound > end_pos:
+                    break
+
         # final one, compute
-        temp_results = compute_cov(current_chrn_covregion, annotation_dict, current_chrn, sample_tag)
-        if not temp_results:
-            fout.write('\n'.join([str(x) for x in temp_results]))
-            fout.flush()
+        temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
+        if temp_results:
+            fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
     fout.close()
     return
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Compute gene coverage''')
-    parser.add_argument('-a', '--annotation', metavar='<input.gff/gtf>', help='Path of input gff/gtf', type=str, required=True)
-    parser.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str, required=True)
-    parser.add_argument('-r', '--region', metavar='<str>', help='CDS or exon (default: CDS)', type=str, choices=['CDS', 'exon'], default='CDS')
+    parser.add_argument('-a', '--annotation', metavar='<input.gff/gtf>', help='Path of input gff/gtf', type=str,
+                        required=True)
+    parser.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,
+                        required=True)
+    parser.add_argument('-r', '--region', metavar='<str>', help='CDS or exon (default: CDS)', type=str,
+                        choices=['CDS', 'exon'], default='CDS')
     parser.add_argument('-o', '--output', metavar='<output.cov>', help='Path of output cov', type=str, required=True)
     parser.add_argument('-n', '--sample_name', metavar='<str>', help='Name of sample', type=str, required=True)
     parser.add_argument('-m', '--min_depth', metavar='<int>', help='Min depth', type=int, default=1)
@@ -214,13 +291,16 @@ if __name__ == "__main__":
     output_path = os.path.abspath(args['output'])
     bed_path = os.path.abspath(args['bed'])
     sample_tag = args['sample_name']
-    region = args['region']
+    used_region = args['region']
     min_depth = args['min_depth']
 
     if annotation_path.endswith('gtf'):
-        annotation = readgtf(annotation_path, region)
+        annotation = readgtf(annotation_path, used_region)
     elif annotation_path.endswith('gff') or annotation_path.endswith('gff3'):
-        annotation = readgff(annotation_path, region)
+        annotation = readgff(annotation_path, used_region)
+    else:
+        logging.error("# No gff/gff3/gtf!")
+        exit()
 
     chrn_n = 0
     gene_n = 0
@@ -239,11 +319,6 @@ if __name__ == "__main__":
         gene_n=gene_n,
         tran_n=trans_n,
         ele_n=ele_n,
-        region=region
+        region=used_region
     ))
-    scan_bed(bed_path, annotation, output_path, sample_tag, min_depth, scan_depth=False)
-
-
-
-
-
+    scan_bed(bed_path, annotation, output_path, used_region, sample_tag, min_depth, scan_depth=False)
