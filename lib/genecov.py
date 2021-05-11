@@ -225,7 +225,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
             if temp[0] not in annotation_dicts[0]:
                 continue
             if temp[0] != current_chrn:
-                # get depth, cov
+                # get depth, cov of last chromosome
                 if current_chrn != '':
                     temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
                     if temp_results:
