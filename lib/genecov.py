@@ -3,14 +3,15 @@
 """
     @Author: Hongzhang Xue
     @Modified: 2021/4/28 5:41 PM
-    @Usage:
+    @Usage: bedtools genomecov -bga -split -ibam xx.bam > xx.bed;
+            python3 genecov.py -a ref_pTpG.gff -o xx.cov -n xx -b xx.bed
 """
 import argparse
 import logging
-
 from Genome_Interval import *
 from tlog import *
 import os
+import sys
 
 
 def readgff(gff, ele_select="CDS"):
@@ -297,6 +298,8 @@ if __name__ == "__main__":
     sample_tag = args['sample_name']
     used_region = args['region']
     min_depth = args['min_depth']
+    # command
+    logging.info('# ' + ' '.join(sys.argv))
 
     if annotation_path.endswith('gtf'):
         annotation = readgtf(annotation_path, used_region)
