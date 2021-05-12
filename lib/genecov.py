@@ -14,8 +14,8 @@ import sys
 
 
 def readgff(gff, ele_select="CDS"):
-    gene_dict = dict()  # {'chr1':{'geneA':{'transcript1':{'CDS1':''}}}}
-    ele_dict = dict()  # {'geneA':(start,end)}
+    gene_dict = dict()  # {'chr1':{'geneA':{'transcriptA_1':{'CDSA_1_1':''}}}}
+    ele_dict = dict()  # {'geneA':(start,end),'transcriptA_1':(start,end),'CDSA_1_1':(start,end)}
     region_dict = dict()  # {'chr1':[(start,end)]}
     current_gene_id = ''
     current_transcript_id = ''
@@ -27,28 +27,24 @@ def readgff(gff, ele_select="CDS"):
             if temp[2] not in ["gene", "mRNA", "transcript", ele_select]:
                 continue
             ele = GFFElement(line)
-            ele_chrn = ele.chrn
-            if ele_chrn not in gene_dict:
-                gene_dict[ele_chrn] = dict()
-                region_dict[ele_chrn] = []
-            ele_type = ele.type
-            if ele_type == "gene":
-                # ele = GFFGene(line)
-                current_gene_id = ele.get_id()
-                if current_gene_id not in gene_dict[ele_chrn] and current_gene_id != '':
-                    gene_dict[ele_chrn][current_gene_id] = dict()
-            elif ele_type == "mRNA" or ele_type == "transcript":
-                # ele = GFFTranscript(line)
-                current_transcript_id = ele.get_id()
-                if current_transcript_id not in gene_dict[ele_chrn][current_gene_id]:
-                    gene_dict[ele_chrn][current_gene_id][current_transcript_id] = dict()
-            elif ele_type == ele_select:
-                # ele = GFFElement(line)
-                gene_dict[ele.chrn][current_gene_id][current_transcript_id][ele.get_id()] = ''
+            ele_id = ele.get_id()
+            if ele.chrn not in gene_dict:
+                gene_dict[ele.chrn] = dict()
+                region_dict[ele.chrn] = []
+            if ele.type == "gene":
+                current_gene_id = ele_id
+                if current_gene_id not in gene_dict[ele.chrn] and current_gene_id != '':
+                    gene_dict[ele.chrn][current_gene_id] = dict()
+            elif ele.type == "mRNA" or ele.type == "transcript":
+                current_transcript_id = ele_id
+                if current_transcript_id not in gene_dict[ele.chrn][current_gene_id] and current_gene_id != '':
+                    gene_dict[ele.chrn][current_gene_id][current_transcript_id] = dict()
+            elif ele.type == ele_select:
+                gene_dict[ele.chrn][current_gene_id][current_transcript_id][ele.get_id()] = 1
             ele_region = (ele.start, ele.end)
-            ele_dict[ele.get_id()] = ele_region
-            if ele_region not in region_dict[ele_chrn]:
-                region_dict[ele_chrn] += [ele_region]
+            ele_dict[ele_id] = ele_region
+            if ele_region not in region_dict[ele.chrn]:
+                region_dict[ele.chrn] += [ele_region]
     return gene_dict, ele_dict, region_dict
 
 
@@ -195,8 +191,12 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
                                                            ]])]
             # sum at transcript level
             level = 'mRNA'
-            transcript_ele_cov = transcript_ele_sumcov / transcript_ele_sumlength
-            transcript_ele_depth = transcript_ele_sumdepth / transcript_ele_sumlength
+            if transcript_ele_sumlength != 0:
+                transcript_ele_cov = transcript_ele_sumcov / transcript_ele_sumlength
+                transcript_ele_depth = transcript_ele_sumdepth / transcript_ele_sumlength
+            else:
+                transcript_ele_cov = 0
+                transcript_ele_depth = 0
             outresults += ['\t'.join([str(x) for x in [sample_tag,
                                                        chrn,
                                                        level,
@@ -242,17 +242,17 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                     anno_list_obj.sort()
                     current_anno_idx = 0
             # bed format
-            depth = int(float(temp[3]))  # int error if 1.1e6
             current_chrn = temp[0]
-            start_pos = int(temp[1]) + 1
-            end_pos = int(temp[2])
+            depth = int(float(temp[3]))  # int error if 1.1e6
             # ignore low depth
             if depth < at_least_depth:
                 continue
             # update scan pos
+            end_pos = int(temp[2])
             if end_pos < anno_list_obj.intervals[current_anno_idx].lower_bound:
                 continue
             # no any scan in current chromosome
+            start_pos = int(temp[1]) + 1
             if current_anno_idx == anno_list_obj.count - 1 and \
                     start_pos > anno_list_obj.intervals[current_anno_idx].upper_bound:
                 continue
