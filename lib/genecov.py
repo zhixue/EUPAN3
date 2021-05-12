@@ -217,7 +217,7 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
     return outresults
 
 
-def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_least_depth=1, scan_depth=True):
+def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_least_depth=1):
     current_chrn = ''
     current_anno_idx = 0
     fout = open(output, 'w')
@@ -328,4 +328,5 @@ if __name__ == "__main__":
         ele_n=ele_n,
         region=used_region
     ))
-    scan_bed(bed_path, annotation, output_path, used_region, sample_tag, min_depth, scan_depth=False)
+    scan_bed(bed_path, annotation, output_path, used_region, sample_tag, min_depth)
+    logging.info('# Finish computing coverage and depth.')
