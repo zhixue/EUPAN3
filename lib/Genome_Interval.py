@@ -9,7 +9,7 @@
 
 class GInterval(object):
     # region legal: list, tuple, string
-    def __init__(self, region, chrn='', sdepth=0, base_0=False, right_closed_interval=True):
+    def __init__(self, region, chrn='', sdepth=0, min_depth=1, base_0=False, right_closed_interval=True):
         if isinstance(region, list) or isinstance(region, tuple):
             self.lower_bound = region[0]
             self.upper_bound = region[1]
@@ -28,12 +28,13 @@ class GInterval(object):
         self.region = [self.lower_bound, self.upper_bound]
         self.length = self.upper_bound - self.lower_bound + 1
         self.chrn = chrn
-        if sdepth >= 1:
+        self.sumdepth = sdepth
+        if sdepth >= min_depth:
             self.sumcov = self.length
-            self.sumdepth = sdepth
         else:
             self.sumcov = 0
-            self.sumdepth = 0
+
+
 
     def __str__(self):
         return str(self.chrn) + ':' + str(self.region) + \

@@ -245,7 +245,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
             current_chrn = temp[0]
             depth = int(float(temp[3]))  # int error if 1.1e6
             # ignore low depth
-            if depth < at_least_depth:
+            if depth == 0:  # if depth < at_least_depth:
                 continue
             # update scan pos
             end_pos = int(temp[2])
@@ -257,7 +257,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                     start_pos > anno_list_obj.intervals[current_anno_idx].upper_bound:
                 continue
 
-            temp_scan = GInterval((start_pos, end_pos), sdepth=depth)
+            temp_scan = GInterval((start_pos, end_pos), sdepth=depth, min_depth=at_least_depth)
             # update anno pos
             while start_pos > anno_list_obj.intervals[current_anno_idx].upper_bound:
                 if current_anno_idx >= anno_list_obj.count - 1:
