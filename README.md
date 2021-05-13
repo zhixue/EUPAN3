@@ -10,7 +10,8 @@ EUPAN3 is a EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing.
 * [Minimap2](https://github.com/lh3/minimap2) (>=v2.17)
 * [Cd-hit](https://github.com/weizhongli/cdhit) (>=v4.8.1)
 * [Gclust](https://github.com/niu-lab/gclust) (>=v1.0)
-* [Blast](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) (>=2.11.0)
+* [Blast](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST) (>=2.11.0)
+* [Bedtools](https://github.com/arq5x/bedtools2) (>=2.29.2)
 ### 
 
 ## 3. Usage
@@ -209,4 +210,25 @@ optional arguments:
                         Path of output fasta file
   -l <int>, --length_filter <int>
                         Min length of sequences to consider (default: 500)
+```
+
+### 3.7 genecov
+```
+usage: eupan3.py genecov [-h] -a <input.gff/gtf> -b <input.bed> [-r <str>] -o
+                         <output.cov> -n <str> [-m <int>]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -a <input.gff/gtf>, --annotation <input.gff/gtf>
+                        Path of input gff/gtf
+  -b <input.bed>, --bed <input.bed>
+                        bed of of coverage from bedtools
+  -r <str>, --region <str>
+                        CDS or exon (default: CDS)
+  -o <output.cov>, --output <output.cov>
+                        Path of output cov
+  -n <str>, --sample_name <str>
+                        Name of sample
+  -m <int>, --min_depth <int>
+                        Min depth
 ```
