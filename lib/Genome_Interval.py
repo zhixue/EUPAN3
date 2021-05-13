@@ -36,7 +36,8 @@ class GInterval(object):
             self.sumdepth = 0
 
     def __str__(self):
-        return str(self.chrn) + ':' + str(self.region)
+        return str(self.chrn) + ':' + str(self.region) + \
+               ', cov=' + str(self.get_cov()) + ', depth=' + str(self.get_depth())
 
     def getsubseq(self, seq, maxchar_in_one_line=0):
         subseq = seq[self.lower_bound - 1:self.upper_bound]
@@ -115,13 +116,22 @@ class GIntervalList(object):
 
     def sort(self, reverse=False):
         temp = self.intervals
-        sorted_temp = sorted(enumerate([x.region for x in temp]), reverse=reverse)
+        sorted_temp = sorted(enumerate([x.region for x in temp]), key=lambda y: y[1], reverse=reverse)
         indices = [y[0] for y in sorted_temp]
         self.intervals = [temp[idx] for idx in indices]
         self.sorted = True
 
     def isempty(self):
         return self.count == 0
+
+    def get_GI(self, region):
+        for i in range(self.count):
+            if self.intervals[i].lower_bound != region[0]:
+                continue
+            if self.intervals[i].upper_bound != region[1]:
+                continue
+            return self.intervals[i]
+        return None
 
 
 def filter_length(interval_list, min_len=500):
