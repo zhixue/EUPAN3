@@ -7,6 +7,8 @@
             python3 genecov.py -a ref_pTpG.gff -o xx.cov -n xx -b xx.bed
 """
 import argparse
+import logging
+
 from Genome_Interval import *
 from tlog import *
 import os
@@ -19,6 +21,7 @@ def readgff(gff, ele_select="CDS"):
     region_dict = dict()  # {'chr1':[(start,end)]}
     current_gene_id = ''
     current_transcript_id = ''
+    exist_same_element_flag = 0
     with open(gff) as f:
         for line in f:
             if line.startswith('#') or line.rstrip() == '':
@@ -39,12 +42,24 @@ def readgff(gff, ele_select="CDS"):
                 current_transcript_id = ele_id
                 if current_transcript_id not in gene_dict[ele.chrn][current_gene_id] and current_gene_id != '':
                     gene_dict[ele.chrn][current_gene_id][current_transcript_id] = dict()
+                    same_element_exist_time = 1
             elif ele.type == ele_select:
-                gene_dict[ele.chrn][current_gene_id][current_transcript_id][ele.get_id()] = 1
+                # avoid same ID of exon/CDS
+                if ele_id in gene_dict[ele.chrn][current_gene_id][current_transcript_id]:
+                    exist_same_element_flag = 1
+                    ele_part = ele_id.split(':')
+                    if ele_part[-1] == str(same_element_exist_time):
+                        ele_id = ':'.join(ele_part[:-1]) + ':' + str(same_element_exist_time + 1)
+                    else:
+                        ele_id += ':' + str(same_element_exist_time + 1)
+                    same_element_exist_time += 1
+                gene_dict[ele.chrn][current_gene_id][current_transcript_id][ele_id] = 1
             ele_region = (ele.start, ele.end)
             ele_dict[ele_id] = ele_region
             if ele_region not in region_dict[ele.chrn]:
                 region_dict[ele.chrn] += [ele_region]
+    if exist_same_element_flag:
+        logging.warning("# Exist same ID in " + ele_select + '! Add ":[number]" (e.g. xx:2,...) after the same ID!')
     return gene_dict, ele_dict, region_dict
 
 
@@ -133,7 +148,7 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
             gene_depth = 0
 
         # transcript
-        for transcript in annotation_dicts[0][chrn][gene].keys():
+        for transcript in annotation_dicts[0][chrn][gene]:
             transcript_region = annotation_dicts[1][transcript]
             if transcript_region == gene_region:
                 transcript_cov = gene_cov
@@ -152,7 +167,7 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
             transcript_ele_region = []
             transcript_ele = []
             # elements
-            for ele in annotation_dicts[0][chrn][gene][transcript].keys():
+            for ele in annotation_dicts[0][chrn][gene][transcript]:
                 level = used_region
                 transcript_ele += [ele]
                 element_region = annotation_dicts[1][ele]
