@@ -7,8 +7,6 @@
             python3 genecov.py -a ref_pTpG.gff -o xx.cov -n xx -b xx.bed
 """
 import argparse
-import logging
-
 from Genome_Interval import *
 from tlog import *
 import os
