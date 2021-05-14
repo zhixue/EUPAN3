@@ -64,46 +64,62 @@ def readgff(gff, ele_select="CDS"):
 
 
 def readgtf(gtf, ele_select="CDS"):
-    gene_dict = dict()  # {'chr1':{'geneA':{'transcript1':{'CDS1':''}}}}
+    gene_dict = dict()  # {'chr1':{'geneA':{'transcript1':{'CDS:xx:1':''}}}}
     ele_dict = dict()  # {'geneA':(1,2)}
-    region_dict = dict()  # {'chr1':{(1,2):['xx']}]}
+    region_dict = dict()  # {'chr1':[(1,2),]}
     current_gene_id = ''
     current_transcript_id = ''
     current_eles = []
     current_transcripts = []
+    # store the gene/transcript region if the record exists
+    gene_obj_dict = dict()
+    transcript_obj_dict = dict()
+    no_gene_record_flag = 1
+    no_transcript_record_flag = 1
     with open(gtf) as f:
         for line in f:
             if line.startswith('#') or line.rstrip() == '':
                 continue
             temp = line.rstrip().split('\t')
-            if temp[2] != ele_select:
+            if temp[2] not in ("gene", "transcript", "mRNA", ele_select):
                 continue
             ele_chrn = temp[0]
             if ele_chrn not in gene_dict:
                 gene_dict[ele_chrn] = dict()
-                region_dict[ele_chrn] = dict()
+                region_dict[ele_chrn] = []
             ele_type = temp[2]
-            if ele_type == ele_select:
-                ele = GTFElement(line)
+            ele = GTFElement(line)
+            if ele_type == "gene":
+                gene_obj_dict[ele.details["gene_id"]] = ele
+                no_gene_record_flag = 0
+            elif ele_type in ("transcript", "mRNA"):
+                transcript_obj_dict[ele.details["transcript_id"]] = ele
+                no_gene_record_flag = 0
+            elif ele_type == ele_select:
                 # new transcript/gene
                 if current_transcript_id != '':
+                    # new transcipt
                     if ele.details["transcript_id"] != current_transcript_id:
-                        transcript_ele = GTFVirtual(current_eles)
-                        transcript_region = (transcript_ele.start, transcript_ele.end)
+                        if current_transcript_id in transcript_obj_dict:
+                            transcript_ele = transcript_obj_dict[current_transcript_id]
+                        else:
+                            transcript_ele = GTFVirtual(current_eles)
                         current_transcripts += [transcript_ele]
-                        ele_dict[current_transcript_id] = transcript_ele
-                        if transcript_region not in region_dict[ele_chrn]:
-                            region_dict[ele_chrn][transcript_region] = []
-                        region_dict[ele_chrn][transcript_region] += [current_transcript_id]
+                        ele_dict[current_transcript_id] = transcript_ele.region
+                        if transcript_ele.region not in region_dict[ele_chrn]:
+                            region_dict[ele_chrn] += [transcript_ele.region]
                         current_eles = []
+                    # new gene
                     if ele.details["gene_id"] != current_gene_id:
-                        gene_ele = GTFVirtual(current_transcripts)
-                        gene_region = (gene_ele.start, gene_ele.end)
-                        ele_dict[current_gene_id] = gene_ele
-                        if gene_region not in region_dict[ele_chrn]:
-                            region_dict[ele_chrn][gene_region] = []
-                        region_dict[ele_chrn][gene_region] += [current_gene_id]
+                        if current_gene_id in gene_obj_dict:
+                            gene_ele = gene_obj_dict[current_gene_id]
+                        else:
+                            gene_ele = GTFVirtual(current_transcripts)
+                        ele_dict[current_gene_id] = gene_ele.region
+                        if gene_ele.region not in region_dict[ele_chrn]:
+                            region_dict[ele_chrn] += [gene_ele.region]
                         current_transcripts = []
+                # update current
                 current_gene_id = ele.details["gene_id"]
                 current_transcript_id = ele.details["transcript_id"]
                 if current_gene_id not in gene_dict[ele_chrn]:
@@ -112,25 +128,30 @@ def readgtf(gtf, ele_select="CDS"):
                     gene_dict[ele_chrn][current_gene_id][current_transcript_id] = dict()
                 current_eles += [ele]
                 current_ele_id = ele.get_id()
-                gene_dict[ele_chrn][current_gene_id][current_transcript_id][current_ele_id] = ''
-                ele_region = (ele.start, ele.end)
-                if ele_region not in region_dict[ele_chrn]:
-                    region_dict[ele_chrn][ele_region] = current_ele_id
+                gene_dict[ele_chrn][current_gene_id][current_transcript_id][current_ele_id] = 1
+                if ele.region not in region_dict[ele_chrn]:
+                    region_dict[ele_chrn] += [ele.region]
         # last one
-        transcript_ele = GTFVirtual(current_eles)
-        transcript_region = (transcript_ele.start, transcript_ele.end)
+        if current_transcript_id in transcript_obj_dict:
+            transcript_ele = transcript_obj_dict[current_transcript_id]
+        else:
+            transcript_ele = GTFVirtual(current_eles)
         current_transcripts += [transcript_ele]
-        ele_dict[current_transcript_id] = transcript_ele
-        if transcript_region not in region_dict[ele_chrn]:
-            region_dict[ele_chrn][transcript_region] = []
-        region_dict[ele_chrn][transcript_region] += [current_transcript_id]
+        ele_dict[current_transcript_id] = transcript_ele.region
+        if transcript_ele.region not in region_dict[ele_chrn]:
+            region_dict[ele_chrn] += [transcript_ele.region]
 
-        gene_ele = GTFVirtual(current_transcripts)
-        gene_region = (gene_ele.start, gene_ele.end)
-        ele_dict[current_gene_id] = gene_ele
-        if gene_region not in region_dict[ele_chrn]:
-            region_dict[ele_chrn][gene_region] = []
-        region_dict[ele_chrn][gene_region] += [current_gene_id]
+        if current_gene_id in gene_obj_dict:
+            gene_ele = gene_obj_dict[current_gene_id]
+        else:
+            gene_ele = GTFVirtual(current_transcripts)
+        ele_dict[current_gene_id] = gene_ele.region
+        if gene_ele.region not in region_dict[ele_chrn]:
+            region_dict[ele_chrn] += [gene_ele.region]
+    if no_gene_record_flag:
+        logging.warning("# No gene records in gtf, use transcripts of gene to infer the start and end!")
+    if no_transcript_record_flag:
+        logging.warning("# No transcript/mRNA records in gtf, use elements of transcript to infer the start and end!")
     return gene_dict, ele_dict, region_dict
 
 

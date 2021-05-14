@@ -406,6 +406,7 @@ class GTFElement(object):
         self.end = int(self.end)
         if self.start > self.end:
             self.start, self.end = self.end, self.start
+        self.region = (self.start, self.end)
         # GInterval.__init__(self, [self.start, self.end])
 
     def find_parentid(self):
@@ -432,13 +433,13 @@ class GTFVirtual(object):
                 self.end = ele.end
             if self.start > ele.start:
                 self.start = ele.start
-            '''
-            if self.type == 'exon':
-                self.exonlength += ele.get_length()
-            elif self.type == 'CDS':
-                self.CDSlength += ele.get_length()
-            '''
-        self.children = gtf_elements
+        self.region = (self.start, self.end)
+        self.details = gtf_elements[0].details
+        if "gene_id" in gtf_elements[0].details:
+            self.details = {"gene_id": gtf_elements[0].details["gene_id"]}
+        if "transcript_id" in gtf_elements[0].details:
+            self.details["transcript_id"] = gtf_elements[0].details["transcript_id"]
+        # self.children = gtf_elements
 
     def get_length(self):
         return self.end - self.start + 1
