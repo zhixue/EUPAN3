@@ -5,7 +5,6 @@
     @Modified: 2021/4/28 3:32 PM
     @Usage: python3 ptpg.py -i x.gtf/x.gff3 -r cds -o x_pTpG.gtf/x_pTpG.gff
 """
-import logging
 import os
 import argparse
 from Genome_Interval import string2dict
@@ -14,19 +13,31 @@ from tlog import *
 
 def ptpg_gtf(ingtf, region, outgtf):
     current_gene = ''
+    gene_line = ''
+    gene_dict = dict()
+    transcript_dict = dict()
     block_string = dict()
     block_length = dict()
+    write_transcript_n = 0
 
     with open(ingtf) as f:
         with open(outgtf, 'w') as fout:
             for line in f:
+                # pass comment and blank
+                if line.startswith('#'):
+                    continue
+                if line.rstrip() == '':
+                    continue
                 temp = line.rstrip().split('\t')
                 # like transcript_id "LOC_Os01g01010.1"; gene_id "LOC_Os01g01010";
                 attr = string2dict(temp[8], eq=' ', rm_quote=True)
                 gene_id = attr['gene_id']
-                if trans_id in attr:
+                gene_dict[gene_id] = 0
+                if 'transcript_id' in attr:
                     trans_id = attr['transcript_id']
+                    transcript_dict[trans_id] = 0
                 else:
+                    gene_line = line
                     continue
                 if current_gene != gene_id and current_gene != '':
                     # check
@@ -37,14 +48,18 @@ def ptpg_gtf(ingtf, region, outgtf):
                             if block_length[trans] > max_len:
                                 max_len = block_length[trans]
                                 max_len_trans = trans
-                        fout.write(block_string[max_len_trans])
+                        if max_len_trans != '':
+                            gene_dict[current_gene] = 1
+                            transcript_dict[max_len_trans] = max_len
+                            write_transcript_n += 1
+                            fout.write(block_string[max_len_trans])
                     # init
                     block_string = dict()
                     block_length = dict()
 
                 current_gene = gene_id
                 if trans_id not in block_string:
-                    block_string[trans_id] = line
+                    block_string[trans_id] = gene_line + line
                 else:
                     block_string[trans_id] += line
                 if temp[2] == region:
@@ -63,7 +78,13 @@ def ptpg_gtf(ingtf, region, outgtf):
                     if block_length[trans] > max_len:
                         max_len = block_length[trans]
                         max_len_trans = trans
-                fout.write(block_string[max_len_trans])
+                    if max_len_trans != '':
+                        gene_dict[current_gene] = 1
+                        transcript_dict[max_len_trans] = max_len
+                        write_transcript_n += 1
+                        fout.write(block_string[max_len_trans])
+    logging.info("# Load {n1} genes, {n2} transcripts.".format(n1=len(gene_dict), n2=len(transcript_dict)))
+    logging.info("# Write {n1} genes, {n1} transcripts.".format(n1=write_transcript_n))
 
 
 def ptpg_gff(ingff, region, outgff):

@@ -92,7 +92,7 @@ def readgtf(gtf, ele_select="CDS"):
                 no_gene_record_flag = 0
             elif ele_type in ("transcript", "mRNA"):
                 transcript_obj_dict[ele.details["transcript_id"]] = ele
-                no_gene_record_flag = 0
+                no_transcript_record_flag = 0
             elif ele_type == ele_select:
                 # new transcript/gene
                 if current_transcript_id != '':
@@ -127,6 +127,7 @@ def readgtf(gtf, ele_select="CDS"):
                 current_eles += [ele]
                 current_ele_id = ele.get_id()
                 gene_dict[ele_chrn][current_gene_id][current_transcript_id][current_ele_id] = 1
+                ele_dict[current_gene_id] = ele.region
                 if ele.region not in region_dict[ele_chrn]:
                     region_dict[ele_chrn] += [ele.region]
         # last one
@@ -146,6 +147,7 @@ def readgtf(gtf, ele_select="CDS"):
         ele_dict[current_gene_id] = gene_ele.region
         if gene_ele.region not in region_dict[ele_chrn]:
             region_dict[ele_chrn] += [gene_ele.region]
+
     if no_gene_record_flag:
         logging.warning("# No gene records in gtf, use transcripts of gene to infer the start and end!")
     if no_transcript_record_flag:
