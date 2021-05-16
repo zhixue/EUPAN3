@@ -9,7 +9,7 @@ import os
 import argparse
 from Genome_Interval import string2dict
 from tlog import *
-
+import sys
 
 def ptpg_gtf(ingtf, region, outgtf):
     current_gene = ''
@@ -182,6 +182,9 @@ if __name__ == "__main__":
     input_path = os.path.abspath(args['input'])
     output_path = os.path.abspath(args['output'])
     selected_region = args['region']
+
+    # command
+    logging.info('# ' + ' '.join(sys.argv))
 
     # error check
     if input_path == output_path:
