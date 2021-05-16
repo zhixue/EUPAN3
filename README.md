@@ -212,7 +212,21 @@ optional arguments:
                         Min length of sequences to consider (default: 500)
 ```
 
-### 3.7 genecov
+### 3.7 ptpg
+```
+usage: eupan3.py ptpg [-h] -i <input.gff/gtf> [-r <str>] -o <output.gff/gtf>
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i <input.gff/gtf>, --input <input.gff/gtf>
+                        Path of input gff/gtf
+  -r <str>, --region <str>
+                        CDS or exon (default: CDS)
+  -o <output.gff/gtf>, --output <output.gff/gtf>
+                        Path of output gff/gtf
+```
+
+### 3.8 genecov
 ```
 usage: eupan3.py genecov [-h] -a <input.gff/gtf> -b <input.bed> [-r <str>] -o
                          <output.cov> -n <str> [-m <int>]

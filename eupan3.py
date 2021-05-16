@@ -170,6 +170,17 @@ if __name__ == "__main__":
     parser_fs.add_argument('-l', '--length_filter', metavar='<int>',
                            help='Min length of sequences to consider (default: 500)', type=int, default=500)
 
+    # pTpG
+    parser_ptpg = sub_parser.add_parser("ptpg", help='''Extract the longest transcript elements' records for each gene, 
+    according to CDS or exon length''')
+    parser_ptpg.add_argument('-i', '--input', metavar='<input.gff/gtf>',
+                             help='Path of input gff/gtf', type=str, required=True)
+    parser_ptpg.add_argument('-r', '--region', metavar='<str>',
+                             help='CDS or exon (default: CDS)', type=str,
+                             choices=['CDS', 'exon'], default='CDS')
+    parser_ptpg.add_argument('-o', '--output', metavar='<output.gff/gtf>',
+                             help='Path of output gff/gtf', type=str, required=True)
+
     # geneCov
     parser_gc = sub_parser.add_parser("genecov", help='''Compute gene coverage''')
     parser_gc.add_argument('-a', '--annotation', metavar='<input.gff/gtf>', help='Path of input gff/gtf', type=str,

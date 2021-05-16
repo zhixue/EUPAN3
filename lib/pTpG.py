@@ -13,17 +13,32 @@ from tlog import *
 
 def ptpg_gtf(ingtf, region, outgtf):
     current_gene = ''
+    gene_line = ''
+    gene_dict = dict()
+    transcript_dict = dict()
     block_string = dict()
     block_length = dict()
+    write_transcript_n = 0
 
     with open(ingtf) as f:
         with open(outgtf, 'w') as fout:
             for line in f:
+                # pass comment and blank
+                if line.startswith('#'):
+                    continue
+                if line.rstrip() == '':
+                    continue
                 temp = line.rstrip().split('\t')
                 # like transcript_id "LOC_Os01g01010.1"; gene_id "LOC_Os01g01010";
                 attr = string2dict(temp[8], eq=' ', rm_quote=True)
-                trans_id = attr['transcript_id']
                 gene_id = attr['gene_id']
+                gene_dict[gene_id] = 0
+                if 'transcript_id' in attr:
+                    trans_id = attr['transcript_id']
+                    transcript_dict[trans_id] = 0
+                else:
+                    gene_line = line
+                    continue
                 if current_gene != gene_id and current_gene != '':
                     # check
                     max_len = 0
@@ -33,25 +48,26 @@ def ptpg_gtf(ingtf, region, outgtf):
                             if block_length[trans] > max_len:
                                 max_len = block_length[trans]
                                 max_len_trans = trans
-                        fout.write(block_string[max_len_trans])
+                        if max_len_trans != '':
+                            gene_dict[current_gene] = 1
+                            transcript_dict[max_len_trans] = max_len
+                            write_transcript_n += 1
+                            fout.write(block_string[max_len_trans])
                     # init
                     block_string = dict()
                     block_length = dict()
 
                 current_gene = gene_id
-
                 if trans_id not in block_string:
-                    block_string[trans_id] = line
+                    block_string[trans_id] = gene_line + line
                 else:
                     block_string[trans_id] += line
-
-                if temp[2] == region or temp[2] == 'stop_codon':
+                if temp[2] == region:
                     start = int(temp[3])
                     end = int(temp[4])
                     if trans_id not in block_length:
-                        block_length[trans_id] = end - start + 1
-                    else:
-                        block_length[trans_id] += end - start + 1
+                        block_length[trans_id] = 0
+                    block_length[trans_id] += end - start + 1
 
             # last one
             if current_gene != '':
@@ -62,19 +78,25 @@ def ptpg_gtf(ingtf, region, outgtf):
                     if block_length[trans] > max_len:
                         max_len = block_length[trans]
                         max_len_trans = trans
-                fout.write(block_string[max_len_trans])
+                    if max_len_trans != '':
+                        gene_dict[current_gene] = 1
+                        transcript_dict[max_len_trans] = max_len
+                        write_transcript_n += 1
+                        fout.write(block_string[max_len_trans])
+    logging.info("# Load {n1} genes, {n2} transcripts.".format(n1=len(gene_dict), n2=len(transcript_dict)))
+    logging.info("# Write {n1} genes, {n1} transcripts.".format(n1=write_transcript_n))
 
 
 def ptpg_gff(ingff, region, outgff):
-    gene_length_dict = dict()  # {'gene1':{'mRNA1':200,'mRNA2':120}}
-    transcripts_dict = dict()  # {'mRNA1':{'key1':(120,200),'key2',(202,209)},'mRNA2':{'key1':(120,200)}}
+    gene_length_dict = dict()  # {'gene1':{'mRNA1':89,'mRNA2':81}}
+    transcripts_dict = dict()  # {'mRNA1':[(120,200),(202,209)],'mRNA2':[(120,200)]}
 
     with open(ingff) as f:
         for line in f:
             # pass comment and blank
             if line.startswith('#'):
                 continue
-            if len(line.rstrip()) == 0:
+            if line.rstrip() == '':
                 continue
 
             temp = line.rstrip().split('\t')
@@ -87,31 +109,30 @@ def ptpg_gff(ingff, region, outgff):
                 geneid = string2dict(temp[-1])['Parent']
                 transcriptid = lineid
                 gene_length_dict[geneid][transcriptid] = 0
-                transcripts_dict[transcriptid] = dict()
+                transcripts_dict[transcriptid] = []
             elif line_type == region:
                 transcriptid = string2dict(temp[-1])['Parent']
-                elementid = lineid
-                transcripts_dict[transcriptid][elementid] = tuple((int(temp[3]), int(temp[4])))
-    # sum cds
-    for gene in gene_length_dict:
-        for transcript in gene_length_dict[gene]:
-            sumlen = 0
-            for key in transcripts_dict[transcript]:
-                e_start = transcripts_dict[transcript][key][0]
-                e_end = transcripts_dict[transcript][key][1]
-                sumlen += e_end - e_start + 1
-            gene_length_dict[gene][transcript] = sumlen
+                # avoid same id of exon/CDS
+                # e_id = lineid
+                e_start = int(temp[3])
+                e_end = int(temp[4])
+                transcripts_dict[transcriptid] += [(e_start, e_end)]
+                gene_length_dict[geneid][transcriptid] += e_end - e_start + 1
+    logging.info("# Load {n1} genes, {n2} transcripts.".format(n1=len(gene_length_dict), n2=len(transcripts_dict)))
+
     # get max
     for gene in gene_length_dict:
         maxtranscript = ''
         maxlen = 0
-        for transcript in gene_length_dict[gene]:
-            if gene_length_dict[gene][transcript] > maxlen:
-                maxtranscript = transcript
-                maxlen = gene_length_dict[gene][transcript]
-        gene_length_dict[gene] = {maxtranscript: maxlen}
+        if len(gene_length_dict[gene]) >= 2:
+            for transcript in gene_length_dict[gene]:
+                if gene_length_dict[gene][transcript] > maxlen:
+                    maxtranscript = transcript
+                    maxlen = gene_length_dict[gene][transcript]
+            gene_length_dict[gene] = {maxtranscript: maxlen}
 
     # write
+    write_gene_n = 0
     with open(ingff) as f:
         with open(outgff, 'w') as fout:
             for line in f:
@@ -123,18 +144,27 @@ def ptpg_gff(ingff, region, outgff):
 
                 temp = line.rstrip().split('\t')
                 line_type = temp[2]
-                lineid = string2dict(temp[-1])['ID']
+                attr = string2dict(temp[-1])
+                lineid = attr['ID']
+                # may not write genes, transcripts with no exon/CDS
                 if line_type == 'gene':
-                    fout.write(line)
+                    geneline = line
                 elif line_type in ('transcript', 'mRNA'):
-                    geneid = string2dict(temp[-1])['Parent']
+                    geneid = attr['Parent']
                     transcriptid = lineid
                     if transcriptid in gene_length_dict[geneid]:
-                        fout.write(line)
+                        transcriptline = line
                 else:
-                    transcriptid = string2dict(temp[-1])['Parent']
+                    transcriptid = attr['Parent']
                     if transcriptid in gene_length_dict[geneid]:
-                        fout.write(line)
+                        if gene_length_dict[geneid][transcriptid] > 0:
+                            if geneline != '' and transcriptline != '':
+                                fout.write(geneline + transcriptline)
+                                geneline = ''
+                                transcriptline = ''
+                                write_gene_n += 1
+                            fout.write(line)
+    logging.info("# Write {n1} genes, {n1} transcripts.".format(n1=write_gene_n))
 
 
 if __name__ == "__main__":
@@ -144,7 +174,7 @@ if __name__ == "__main__":
                         help='Path of input gff/gtf', type=str, required=True)
     parser.add_argument('-r', '--region', metavar='<str>',
                         help='CDS or exon (default: CDS)', type=str,
-                        choices=['CDS', 'exon'], default='CDS', required=True)
+                        choices=['CDS', 'exon'], default='CDS')
     parser.add_argument('-o', '--output', metavar='<output.gff/gtf>',
                         help='Path of output gff/gtf', type=str, required=True)
 
