@@ -127,7 +127,7 @@ def readgtf(gtf, ele_select="CDS"):
                 current_eles += [ele]
                 current_ele_id = ele.get_id()
                 gene_dict[ele_chrn][current_gene_id][current_transcript_id][current_ele_id] = 1
-                ele_dict[current_gene_id] = ele.region
+                ele_dict[current_ele_id] = ele.region
                 if ele.region not in region_dict[ele_chrn]:
                     region_dict[ele_chrn] += [ele.region]
         # last one

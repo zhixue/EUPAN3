@@ -212,7 +212,7 @@ optional arguments:
                         Min length of sequences to consider (default: 500)
 ```
 
-### 3.7 genecov
+### 3.7 ptpg
 ```
 usage: eupan3.py ptpg [-h] -i <input.gff/gtf> [-r <str>] -o <output.gff/gtf>
 
