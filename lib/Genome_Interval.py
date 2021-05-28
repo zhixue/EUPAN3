@@ -34,8 +34,6 @@ class GInterval(object):
         else:
             self.sumcov = 0
 
-
-
     def __str__(self):
         return str(self.chrn) + ':' + str(self.region) + \
                ', cov=' + str(self.get_cov()) + ', depth=' + str(self.get_depth())
@@ -443,9 +441,3 @@ class GTFVirtual(object):
 
     def get_length(self):
         return self.end - self.start + 1
-
-
-
-
-
-
