@@ -9,7 +9,6 @@ import argparse
 from tlog import *
 import os
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Use Quast to get assembled contigs/scaffolds to reference and to 
     check the statistics (The script will call Quast program, so the directory where quast.py locates is needed.)''')
@@ -59,17 +58,18 @@ if __name__ == "__main__":
     else:
         gff_par = ''
 
-    command = "{quast} -t {thread} {length_threshold_par} {large_par} -r {ref} {gff_par} -o {output_dir} --no-icarus " \
-              "--no-snps --min-identity {min_indentity} {assembly}".format(quast=args["quast_path"],
-                                                                           thread=args["thread"],
-                                                                           length_threshold_par=length_threshold_par,
-                                                                           large_par=large_par,
-                                                                           ref=args["reference_path"],
-                                                                           gff_par=gff_par,
-                                                                           output_dir=args["output_dir"],
-                                                                           min_indentity=args["identity"],
-                                                                           assembly=args["assembly_path"]
-                                                                           )
+    command = "{quast} -t {thread} {length_threshold_par} {large_par} -r {ref} {gff_par} -o {output_dir} " \
+              "--no-icarus --no-snps " \
+              "--min-identity {min_indentity} {assembly}".format(quast=args["quast_path"],
+                                                                 thread=args["thread"],
+                                                                 length_threshold_par=length_threshold_par,
+                                                                 large_par=large_par,
+                                                                 ref=args["reference_path"],
+                                                                 gff_par=gff_par,
+                                                                 output_dir=args["output_dir"],
+                                                                 min_indentity=args["identity"],
+                                                                 assembly=args["assembly_path"]
+                                                                 )
     logging.info("# Start running Quast using this command:\n")
     os.system(command)
     logging.info("# Finish running Quast.")
