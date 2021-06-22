@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2021/4/8 9:40 PM
+    @Modified: 2021/6/22 9:40 AM
     @Usage: python3 assemsta.py [options]
 """
 import argparse
