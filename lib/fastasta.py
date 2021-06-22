@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2021/4/24 10:54 PM
+    @Modified: 2021/6/22 10:54 AM
     @Usage: python3 fastasta.py -i input.fa -o out fasta_summary.tsv
 """
 import argparse
@@ -24,7 +24,7 @@ def seq_statistics(seq_m):
     if nonn_base == 0:
         gc_content = 0
     else:
-        gc_content = (c_base + g_base) / nonn_base
+        gc_content = 1.0 * (c_base + g_base) / nonn_base
     return all_base, nonn_base, a_base, t_base, c_base, g_base, other_base, round(gc_content, 4)
 
 
@@ -71,18 +71,33 @@ if __name__ == "__main__":
         total_base = 0
         total_nonnbase = 0
         total_gc_content = 0
+        length_list = []
         for key in fasta_ctg_summary:
             total_n += 1
             total_base += fasta_ctg_summary[key][0]
+            length_list += [fasta_ctg_summary[key][0]]
             total_nonnbase += fasta_ctg_summary[key][1]
             total_gc_content += fasta_ctg_summary[key][1] * fasta_ctg_summary[key][-1]
         total_gc_content = round(total_gc_content / total_nonnbase, 4)
-        summary_log = "# Total {n} sequences, with {base} bases ({nonnbase} bases are not N). " \
-                      "Mean length = {lth}, GC content = {gc}".format(n=total_n,
-                                                                      base=total_base,
-                                                                      nonnbase=total_nonnbase,
-                                                                      lth=round(total_base / total_n, 1),
-                                                                      gc=total_gc_content)
+        length_list = sorted(length_list, reverse=True)
+        sum_length = 0
+        Nx_value = 0.5
+        Nx = 0
+        # print(length_list)
+        for i in range(total_n):
+            sum_length += length_list[i]
+            if sum_length >= total_base * Nx_value:
+                Nx = length_list[i]
+                break
+        summary_log = "# Total {n} sequences more than {min_len}bp, with {base} bases ({nonnbase} bases are not N). " \
+                      "Mean length = {lth}, N50 = {n50}, Mean GC content = {gc}".format(n=total_n,
+                                                                                        min_len=args['length_filter'],
+                                                                                        base=total_base,
+                                                                                        nonnbase=total_nonnbase,
+                                                                                        lth=round(total_base / total_n,
+                                                                                                  1),
+                                                                                        gc=total_gc_content,
+                                                                                        n50=Nx)
         logging.info(summary_log)
         summary_header = "#" + '\t'.join(["Seq", "Bases", "NonNBases", "A", "T", "C", "G", "Others", "GCcontent"])
         temp_strings = [summary_log, summary_header]

@@ -307,7 +307,8 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                     break
 
         # final one, compute
-        temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
+        if current_chrn != '':
+            temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
         if temp_results:
             fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
     fout.close()
@@ -356,7 +357,7 @@ if __name__ == "__main__":
                 trans_n += 1
                 ele_n += len(annotation[0][chrn][gene][transcript])
 
-    logging.info('# Load {chrn_n} chromosomes, {gene_n} genes, {tran_n} transcripts, {ele_n} {region}.'.format(
+    logging.info('# Load {chrn_n} chromosomes, {gene_n} genes, {tran_n} transcripts, {ele_n} {region}s.'.format(
         chrn_n=chrn_n,
         gene_n=gene_n,
         tran_n=trans_n,
