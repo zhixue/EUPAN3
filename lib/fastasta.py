@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2021/4/24 10:54 PM
+    @Modified: 2021/6/22 10:54 AM
     @Usage: python3 fastasta.py -i input.fa -o out fasta_summary.tsv
 """
 import argparse
@@ -24,7 +24,7 @@ def seq_statistics(seq_m):
     if nonn_base == 0:
         gc_content = 0
     else:
-        gc_content = (c_base + g_base) / nonn_base
+        gc_content = 1.0 * (c_base + g_base) / nonn_base
     return all_base, nonn_base, a_base, t_base, c_base, g_base, other_base, round(gc_content, 4)
 
 
@@ -89,8 +89,9 @@ if __name__ == "__main__":
             if sum_length >= total_base * Nx_value:
                 Nx = length_list[i]
                 break
-        summary_log = "# Total {n} sequences, with {base} bases ({nonnbase} bases are not N). " \
+        summary_log = "# Total {n} sequences more than {min_len}bp, with {base} bases ({nonnbase} bases are not N). " \
                       "Mean length = {lth}, N50 = {n50}, Mean GC content = {gc}".format(n=total_n,
+                                                                                        min_len=args['length_filter'],
                                                                                         base=total_base,
                                                                                         nonnbase=total_nonnbase,
                                                                                         lth=round(total_base / total_n,
