@@ -6,7 +6,7 @@ import sys
 import tlog
 
 
-def overlap(a, b, min_overlap_len=0):
+def overlap(a, b, min_overlap_len=1):
     if a[1] < b[0] + min_overlap_len or a[0] > b[1] - min_overlap_len:
         return 0
     else:

@@ -51,7 +51,7 @@ if __name__ == "__main__":
                          help='E-value threshold of blastn (default: 1e-5)',
                          type=float, default=1e-5)
     parserb.add_argument('-t', '--thread', metavar='<int>',
-                         help=' Number of threads when blastn, recommend less than 4 (default: 1)', type=int,
+                         help='Number of threads when blastn, recommend less than 4 (default: 1)', type=int,
                          default=1)
 
     args = vars(parser.parse_args())
@@ -87,6 +87,7 @@ if __name__ == "__main__":
         os.system(command)
 
     # get tax from blast
+    logging.info("# Get taxonomies from blast results.")
     acc2tax_out = args["output_dir"] + '/' + "uniquebseq2nt_taxout.txt"
     load_acc_n, load_tax_n, successacc2taxid_n = gettax(blast_out,
                                                         args["at"],
