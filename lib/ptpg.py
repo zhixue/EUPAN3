@@ -11,6 +11,7 @@ from Genome_Interval import string2dict
 from tlog import *
 import sys
 
+
 def ptpg_gtf(ingtf, region, outgtf):
     current_gene = ''
     gene_line = ''
