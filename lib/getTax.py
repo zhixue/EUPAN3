@@ -140,6 +140,7 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
                                         accs = set([blackquery[name][region] for region in blackquery[name]])
                                         lineages = ['|'.join(acc2tax[acc]) for acc in accs if acc in acc2tax]
                                         ft.write('\t'.join([name, ','.join(accs), ','.join(lineages)]) + '\n')
+                            # sequences with no blast hits will be writen in while list file
                             if toblackseq == 1:
                                 fb.write(line)
                             else:

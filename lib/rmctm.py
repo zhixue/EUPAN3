@@ -34,14 +34,14 @@ if __name__ == "__main__":
 
     parserf = parser.add_argument_group('filter parameters')
     parserf.add_argument('-wl', '--white_list', metavar='<str>',
-                         help='legal tax, others will be considered as contamination (default: Viridiplantae)',
+                         help='legal taxonomies, others will be considered as contaminations (default: Viridiplantae)',
                          type=str, default='Viridiplantae')
     parserf.add_argument('-ai', '--alignment_identity', metavar='<int>',
                          help='Alignment identity threshold (default: 90)', type=int, default=90)
     parserf.add_argument('-al', '--alignment_length', metavar='<int>',
                          help='Alignment length threshold (default: 100)', type=int, default=100)
     parserf.add_argument('--force_remove', default=False, action='store_true',
-                         help='Force remove all contamination even if same regions of sequences map to white list')
+                         help='Force remove all contaminations even if same regions of sequences map to white list')
 
     parserb = parser.add_argument_group('blastn parameters')
     parserb.add_argument('-m', '--blastn_path', metavar='<blastn_path>',
@@ -81,13 +81,13 @@ if __name__ == "__main__":
                                              thread=args["thread"])
 
     if os.path.isfile(blast_out) and (not args["rewrite"]):
-        logging.info("# Skip blast block sequences to nt.")
+        logging.info("# Skip blast block sequences to nt database.")
     else:
-        logging.info("# Blast block sequences to nt.")
+        logging.info("# Blast block sequences to nt database.")
         os.system(command)
 
     # get tax from blast
-    logging.info("# Get taxonomies from blast results.")
+    logging.info("# Transform accessions to taxonomies from accession2taxid and rankedlineage files.")
     acc2tax_out = args["output_dir"] + '/' + "uniquebseq2nt_taxout.txt"
     load_acc_n, load_tax_n, successacc2taxid_n = gettax(blast_out,
                                                         args["at"],
@@ -106,6 +106,7 @@ if __name__ == "__main__":
         force_remove = 1
     else:
         force_remove = 0
+    logging.info("# Remove contaminations, force_remove={fr}.".format(fr=force_remove))
     detectcontamination(blast_out,
                         acc2tax_out,
                         args["alignment_identity"],
@@ -116,4 +117,4 @@ if __name__ == "__main__":
                         droped_seq_path,
                         droped_seq_inf_path,
                         force_remove)
-    logging.info("# Finish removing contamination.")
+    logging.info("# Finish removing contaminations.")
