@@ -21,7 +21,7 @@ class GInterval(object):
         if self.lower_bound > self.upper_bound:
             self.upper_bound, self.lower_bound = self.lower_bound, self.upper_bound
         if not right_closed_interval:
-            self.upper_bound = self.upper_bound - 1
+            self.upper_bound -= 1
         if base_0:
             self.lower_bound += 1
             self.upper_bound += 1

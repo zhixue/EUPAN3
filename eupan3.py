@@ -191,7 +191,7 @@ if __name__ == "__main__":
                            choices=['CDS', 'exon'], default='CDS')
     parser_gc.add_argument('-o', '--output', metavar='<output.cov>', help='Path of output cov', type=str, required=True)
     parser_gc.add_argument('-n', '--sample_name', metavar='<str>', help='Name of sample', type=str, required=True)
-    parser_gc.add_argument('-m', '--min_depth', metavar='<int>', help='Min depth', type=int, default=1)
+    parser_gc.add_argument('-m', '--min_depth', metavar='<int>', help='Min depth (default: 1)', type=int, default=1)
 
     if len(sys.argv[1:]) == 0:
         parser.print_help()
