@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
@@ -274,20 +274,22 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                         fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
                 # init for a new chromosome
                 if temp[0] in annotation_dicts[2]:
-                    anno_list_obj = GIntervalList(annotation_dicts[2][temp[0]])
+                    anno_list_obj = GIntervalList(annotation_dicts[2][temp[0]], min_depth=at_least_depth)
                     anno_list_obj.sort()
                     current_anno_idx = 0
             # bed format, 0-based, right open
             current_chrn = temp[0]
-            depth = int(float(temp[3]))  # int error if 1.1e6
-            # ignore 0 depth record
-            if depth == 0:
-                continue
             # 0-based, right open to 1-based, right closed
             # update scan pos
             end_pos = int(temp[2])
             if end_pos < anno_list_obj.intervals[current_anno_idx].lower_bound:
                 continue
+
+            depth = int(float(temp[3]))  # int error if 1.1e6
+            # ignore 0 depth record
+            if depth == 0:
+                continue
+
             # no any scan in current chromosome
             start_pos = int(temp[1]) + 1
             if current_anno_idx == anno_list_obj.count - 1 and \
