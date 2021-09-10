@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
@@ -274,26 +274,31 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                         fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
                 # init for a new chromosome
                 if temp[0] in annotation_dicts[2]:
-                    anno_list_obj = GIntervalList(annotation_dicts[2][temp[0]])
+                    anno_list_obj = GIntervalList(annotation_dicts[2][temp[0]], min_depth=at_least_depth)
                     anno_list_obj.sort()
                     current_anno_idx = 0
-            # bed format
+            # bed format, 0-based, right open
             current_chrn = temp[0]
-            depth = int(float(temp[3]))  # int error if 1.1e6
-            # ignore low depth
-            if depth == 0:  # if depth < at_least_depth:
-                continue
+            # 0-based, right open to 1-based, right closed
             # update scan pos
             end_pos = int(temp[2])
             if end_pos < anno_list_obj.intervals[current_anno_idx].lower_bound:
                 continue
+
+            depth = int(float(temp[3]))  # int error if 1.1e6
+            # ignore 0 depth record
+            if depth == 0:
+                continue
+
             # no any scan in current chromosome
             start_pos = int(temp[1]) + 1
             if current_anno_idx == anno_list_obj.count - 1 and \
                     start_pos > anno_list_obj.intervals[current_anno_idx].upper_bound:
                 continue
 
-            temp_scan = GInterval((start_pos, end_pos), sdepth=depth, min_depth=at_least_depth)
+            temp_scan = GInterval((start_pos, end_pos),
+                                  sdepth=depth,
+                                  min_depth=at_least_depth)
             # update anno pos
             while start_pos > anno_list_obj.intervals[current_anno_idx].upper_bound:
                 if current_anno_idx >= anno_list_obj.count - 1:
@@ -325,7 +330,7 @@ if __name__ == "__main__":
                         choices=['CDS', 'exon'], default='CDS')
     parser.add_argument('-o', '--output', metavar='<output.cov>', help='Path of output cov', type=str, required=True)
     parser.add_argument('-n', '--sample_name', metavar='<str>', help='Name of sample', type=str, required=True)
-    parser.add_argument('-m', '--min_depth', metavar='<int>', help='Min depth', type=int, default=1)
+    parser.add_argument('-m', '--min_depth', metavar='<int>', help='Min depth (default: 1)', type=int, default=1)
 
     args = vars(parser.parse_args())
     annotation_path = os.path.abspath(args['annotation'])

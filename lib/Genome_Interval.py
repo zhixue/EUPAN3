@@ -21,14 +21,14 @@ class GInterval(object):
         if self.lower_bound > self.upper_bound:
             self.upper_bound, self.lower_bound = self.lower_bound, self.upper_bound
         if not right_closed_interval:
-            self.upper_bound = self.upper_bound - 1
+            self.upper_bound -= 1
         if base_0:
             self.lower_bound += 1
             self.upper_bound += 1
         self.region = [self.lower_bound, self.upper_bound]
         self.length = self.upper_bound - self.lower_bound + 1
         self.chrn = chrn
-        self.sumdepth = sdepth
+        self.sumdepth = self.length * sdepth
         if sdepth >= min_depth:
             self.sumcov = self.length
         else:
@@ -56,8 +56,9 @@ class GInterval(object):
         if region_overlap_length == 0:
             return 0
         else:
-            self.sumcov += region_overlap_length
-            self.sumdepth += region_overlap_length * gi_object.sumdepth
+            self.sumdepth += region_overlap_length * gi_object.get_depth()
+            if gi_object.sumcov > 0:
+                self.sumcov += region_overlap_length
             return 1
 
     def get_cov(self):
@@ -68,7 +69,7 @@ class GInterval(object):
 
 
 class GIntervalList(object):
-    def __init__(self, regions_string, chrn_string='', depth_tuple=[],
+    def __init__(self, regions_string, chrn_string='', depth_tuple=[], min_depth=1,
                  sep_intervals=',', sep_bounds='-', base_0=False, right_closed_interval=True, min_len=1):
         # 1,2|3,5
         coordinates = []
@@ -85,14 +86,17 @@ class GIntervalList(object):
                 temp_interval = GInterval(coordinates[i],
                                           chrn=chrn_string,
                                           sdepth=depth_tuple[i],
+                                          min_depth=min_depth,
                                           base_0=base_0,
                                           right_closed_interval=right_closed_interval)
                 if temp_interval.length >= min_len:
                     intervals += [temp_interval]
         else:
+            # using global min depth information
             for i in range(self.count):
                 temp_interval = GInterval(coordinates[i],
                                           chrn=chrn_string,
+                                          min_depth=min_depth,
                                           base_0=base_0,
                                           right_closed_interval=right_closed_interval)
                 if temp_interval.length >= min_len:
@@ -125,11 +129,8 @@ class GIntervalList(object):
 
     def get_GI(self, region):
         for i in range(self.count):
-            if self.intervals[i].lower_bound != region[0]:
-                continue
-            if self.intervals[i].upper_bound != region[1]:
-                continue
-            return self.intervals[i]
+            if self.intervals[i].lower_bound == region[0] and self.intervals[i].upper_bound == region[1]:
+                return self.intervals[i]
         return None
 
 
