@@ -270,7 +270,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                 # get depth, cov of last chromosome
                 if current_chrn != '':
                     temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
-                    if temp_results:
+                    if temp_results[11]:
                         fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
                 # init for a new chromosome
                 if temp[0] in annotation_dicts[2]:
@@ -314,7 +314,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
         # final one, compute
         if current_chrn != '':
             temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
-        if temp_results:
+        if temp_results[11]:
             fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
     fout.close()
     return
