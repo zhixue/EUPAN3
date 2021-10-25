@@ -233,22 +233,23 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
             else:
                 transcript_ele_cov = 0
                 transcript_ele_depth = 0
-            outresults += ['\t'.join([str(x) for x in [sample_tag,
-                                                       chrn,
-                                                       level,
-                                                       gene,
-                                                       gene_region,
-                                                       round(gene_cov, 4),
-                                                       round(gene_depth, 4),
-                                                       transcript,
-                                                       transcript_region,
-                                                       round(transcript_cov, 4),
-                                                       round(transcript_depth, 4),
-                                                       transcript_ele,
-                                                       transcript_ele_region,
-                                                       round(transcript_ele_cov, 4),
-                                                       round(transcript_ele_depth, 4)
-                                                       ]])]
+            if transcript_ele:
+                outresults += ['\t'.join([str(x) for x in [sample_tag,
+                                                           chrn,
+                                                           level,
+                                                           gene,
+                                                           gene_region,
+                                                           round(gene_cov, 4),
+                                                           round(gene_depth, 4),
+                                                           transcript,
+                                                           transcript_region,
+                                                           round(transcript_cov, 4),
+                                                           round(transcript_depth, 4),
+                                                           transcript_ele,
+                                                           transcript_ele_region,
+                                                           round(transcript_ele_cov, 4),
+                                                           round(transcript_ele_depth, 4)
+                                                           ]])]
     return outresults
 
 
@@ -270,9 +271,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                 # get depth, cov of last chromosome
                 if current_chrn != '':
                     temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
-                    if len(temp_results) >= 12:
-                        if temp_results[11]:
-                            fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
+                    fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
                 # init for a new chromosome
                 if temp[0] in annotation_dicts[2]:
                     anno_list_obj = GIntervalList(annotation_dicts[2][temp[0]], min_depth=at_least_depth)
@@ -315,9 +314,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
         # final one, compute
         if current_chrn != '':
             temp_results = compute_cov(annotation_dicts, anno_list_obj, used_region, current_chrn, sample_tag)
-        if len(temp_results) >= 12:
-            if temp_results[11]:
-                fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
+            fout.write('\n'.join([str(x) for x in temp_results]) + '\n')
     fout.close()
     return
 
