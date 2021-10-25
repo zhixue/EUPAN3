@@ -244,5 +244,5 @@ optional arguments:
   -n <str>, --sample_name <str>
                         Name of sample
   -m <int>, --min_depth <int>
-                        Min depth
+                        Min depth (default: 1)
 ```
