@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2021/4/8 2:30 PM
+    @Modified: 2021/11/1 8:30 PM
     @Usage: python3 eupan3.py command [options]
 """
 import argparse
@@ -10,7 +10,7 @@ import os
 import sys
 
 DESCRIPTION = """
-Third Generation Sequencing EUkaryote Pan-genome ANalysis toolkit (TGSEUPAN)
+EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing (EUPAN3)
                                                                                                          
 """
 VERSION = "Version 0.1.0"
