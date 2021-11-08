@@ -279,7 +279,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
                     current_anno_idx = 0
             # bed format, 0-based, right open
             current_chrn = temp[0]
-            # 0-based, right open to 1-based, right closed
+            # [0-based, right open] to [1-based, right closed]
             # update scan pos
             end_pos = int(temp[2])
             if end_pos < anno_list_obj.intervals[current_anno_idx].lower_bound:

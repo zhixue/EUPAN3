@@ -442,3 +442,17 @@ class GTFVirtual(object):
 
     def get_length(self):
         return self.end - self.start + 1
+
+# bed
+class BEDElement(object):
+    def __init__(self, line_string):  # https://m.ensembl.org/info/website/upload/bed.html
+        self.string = line_string  # including '\n'
+        self.chrn,  self.start, self.end = line_string.rstrip().split('\t')[:3]
+        # update start, end
+        # [0-based, right open] to [1-based, right closed]
+        self.start = int(self.start) + 1
+        self.end = int(self.end)
+        if self.start > self.end:
+            self.start, self.end = self.end, self.start
+        self.region = (self.start, self.end)
+
