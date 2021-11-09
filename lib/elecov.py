@@ -15,14 +15,22 @@ import sys
 
 def readbed(bed):
     region_dict = dict()  # {'chr1':[(start,end)]}
+    rep_region_n = 0
     with open(bed) as f:
         for line in f:
             if line.startswith('#') or line.rstrip() == '':
                 continue
             ele = BEDElement(line)
             if ele.chrn not in region_dict:
-                region_dict[ele.chrn] = []
-            region_dict[ele.chrn] += [(ele.start, ele.end)]
+                region_dict[ele.chrn] = set()
+            if (ele.start, ele.end) in region_dict[ele.chrn]:
+                rep_region_n += 1
+                continue
+            region_dict[ele.chrn].add((ele.start, ele.end))
+        for key in region_dict:
+            region_dict[key] = tuple(region_dict[key])
+    if rep_region_n:
+        logging.warning('# Remove {rep_region_n} same region elements.'.format(rep_region_n=rep_region_n))
     return dict(), dict(), region_dict
 
 
