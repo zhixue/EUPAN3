@@ -28,7 +28,7 @@ def readbed(bed):
                 continue
             region_dict[ele.chrn].add((ele.start, ele.end))
         for key in region_dict:
-            region_dict[key] = tuple(region_dict[key])
+            region_dict[key] = sorted(tuple(region_dict[key]))
     if rep_region_n:
         logging.warning('# Remove {rep_region_n} same region elements.'.format(rep_region_n=rep_region_n))
     return dict(), dict(), region_dict
