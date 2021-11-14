@@ -320,7 +320,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='''Compute gene coverage''')
+    parser = argparse.ArgumentParser(description='''Compute gene coverage and depth''')
     parser.add_argument('-a', '--annotation', metavar='<input.gff/gtf>', help='Path of input gff/gtf', type=str,
                         required=True)
     parser.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,

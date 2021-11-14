@@ -53,14 +53,31 @@ def compute_cov(annotation_dicts, anno_list_object, chrn, sample_tag):
 def scan_bed(bedfile, annotation_dicts, output, sample_tag='', at_least_depth=1):
     current_chrn = ''
     current_anno_idx = 0
-    fout = open(output, 'w')
-    header_cols = ["# Sample", "Chr", "Element_Region", "Element_Cov", "Element_Depth"]
-    fout.write('\t'.join(header_cols) + '\n')
+    visited_chrns = set()
+    if os.path.isfile(output):
+        logging.warning("# {output} exists!".format(output=output))
+        with open(output) as f:
+            for line in f:
+                if line.startswith('#') or line.startswith('\n'):
+                    continue
+                temp = line.split('\t')
+                if len(temp) >= 2:
+                    visited_chrns.add(line.split('\t')[1])
+        logging.warning("# Skip {n} chromosomes!".format(n=len(visited_chrns)))
+        fout = open(output, 'a')
+    else:
+        fout = open(output, 'w')
+        header_cols = ["# Sample", "Chr", "Element_Region", "Element_Cov", "Element_Depth"]
+        fout.write('\t'.join(header_cols) + '\n')
+
     with open(bedfile) as f:
         for line in f:
             temp = line.rstrip().split('\t')
             # skip chromosome without annotations
             if temp[0] not in annotation_dicts[2]:
+                continue
+            # skip visited chromosome
+            if temp[0] in visited_chrns:
                 continue
             if temp[0] != current_chrn:
                 # get depth, cov of last chromosome
@@ -115,7 +132,7 @@ def scan_bed(bedfile, annotation_dicts, output, sample_tag='', at_least_depth=1)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='''Compute gene coverage''')
+    parser = argparse.ArgumentParser(description='''Compute element coverage and depth''')
     parser.add_argument('-a', '--annotation', metavar='<anotation.bed>', help='Path of anotation.bed', type=str,
                         required=True)
     parser.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,
@@ -128,7 +145,7 @@ if __name__ == "__main__":
     annotation_path = os.path.abspath(args['annotation'])
     output_path = os.path.abspath(args['output'])
     bed_path = os.path.abspath(args['bed'])
-    sample_tag = args['sample_name']
+    sample = args['sample_name']
 
     min_depth = args['min_depth']
     # command
@@ -137,6 +154,7 @@ if __name__ == "__main__":
     if annotation_path.endswith('bed'):
         annotation = readbed(annotation_path)
     else:
+        annotation = ''
         logging.error("# No bed!")
         exit()
 
@@ -144,12 +162,11 @@ if __name__ == "__main__":
     ele_n = 0
     for chrn in annotation[2]:
         chrn_n += 1
-        for ele in annotation[2][chrn]:
-            ele_n += 1
+        ele_n += len(annotation[2][chrn])
 
     logging.info('# Load {chrn_n} chromosomes, {ele_n} elements.'.format(
         chrn_n=chrn_n,
         ele_n=ele_n
     ))
-    scan_bed(bed_path, annotation, output_path, sample_tag, min_depth)
+    scan_bed(bed_path, annotation, output_path, sample, min_depth)
     logging.info('# Finish computing coverage and depth.')
