@@ -256,16 +256,32 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
 def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_least_depth=1):
     current_chrn = ''
     current_anno_idx = 0
-    fout = open(output, 'w')
-    header_cols = ["# Sample", "Chr", "Level", "Gene", "Gene_Region", "Gene_Cov", "Gene_Depth",
-                   "mRNA", "mRNA_Region", "mRNA_Cov", "mRNA_Depth",
-                   "Element", "Element_Region", "Element_Cov", "Element_Depth"]
-    fout.write('\t'.join(header_cols) + '\n')
+    visited_chrns = set()
+    if os.path.isfile(output):
+        logging.warning("# {output} exists!".format(output=output))
+        with open(output) as f:
+            for line in f:
+                if line.startswith('#') or line.startswith('\n'):
+                    continue
+                temp = line.split('\t')
+                if len(temp) >= 2:
+                    visited_chrns.add(line.split('\t')[1])
+        logging.warning("# Skip {n} chromosomes!".format(n=len(visited_chrns)))
+        fout = open(output, 'a')
+    else:
+        fout = open(output, 'w')
+        header_cols = ["# Sample", "Chr", "Level", "Gene", "Gene_Region", "Gene_Cov", "Gene_Depth",
+                       "mRNA", "mRNA_Region", "mRNA_Cov", "mRNA_Depth",
+                       "Element", "Element_Region", "Element_Cov", "Element_Depth"]
+        fout.write('\t'.join(header_cols) + '\n')
     with open(bedfile) as f:
         for line in f:
             temp = line.rstrip().split('\t')
             # skip chromosome without annotations
             if temp[0] not in annotation_dicts[0]:
+                continue
+            # skip visited chromosome
+            if temp[0] in visited_chrns:
                 continue
             if temp[0] != current_chrn:
                 # get depth, cov of last chromosome
