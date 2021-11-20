@@ -246,3 +246,22 @@ optional arguments:
   -m <int>, --min_depth <int>
                         Min depth (default: 1)
 ```
+
+### 3.9 elecov
+```
+usage: eupan3.py elecov [-h] -a <anotation.bed> -b <input.bed> -o <output.cov> -n
+                 <str> [-m <int>]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -a <anotation.bed>, --annotation <anotation.bed>
+                        Path of anotation.bed
+  -b <input.bed>, --bed <input.bed>
+                        bed of of coverage from bedtools
+  -o <output.cov>, --output <output.cov>
+                        Path of output cov
+  -n <str>, --sample_name <str>
+                        Name of sample
+  -m <int>, --min_depth <int>
+                        Min depth (default: 1)
+```

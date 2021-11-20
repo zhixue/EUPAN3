@@ -132,7 +132,7 @@ def scan_bed(bedfile, annotation_dicts, output, sample_tag='', at_least_depth=1)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='''Compute element coverage and depth''')
+    parser = argparse.ArgumentParser(description='''Compute genomic element coverage and depth''')
     parser.add_argument('-a', '--annotation', metavar='<anotation.bed>', help='Path of anotation.bed', type=str,
                         required=True)
     parser.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,

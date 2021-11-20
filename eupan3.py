@@ -161,7 +161,7 @@ if __name__ == "__main__":
                             help=' Number of threads when blastn, recommend less than 4 (default: 1)', type=int,
                             default=1)
 
-    # fastaSta
+    # FastaSta
     parser_fs = sub_parser.add_parser("fastasta", help='''Calculate statistics of fasta file (DNA)''')
     parser_fs.add_argument('-i', '--input_path', metavar='<input.fa>',
                            help='Path of input fasta file', type=str, required=True)
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     parser_ptpg.add_argument('-o', '--output', metavar='<output.gff/gtf>',
                              help='Path of output gff/gtf', type=str, required=True)
 
-    # geneCov
+    # GeneCov
     parser_gc = sub_parser.add_parser("genecov", help='''Compute gene coverage''')
     parser_gc.add_argument('-a', '--annotation', metavar='<input.gff/gtf>', help='Path of input gff/gtf', type=str,
                            required=True)
@@ -192,6 +192,16 @@ if __name__ == "__main__":
     parser_gc.add_argument('-o', '--output', metavar='<output.cov>', help='Path of output cov', type=str, required=True)
     parser_gc.add_argument('-n', '--sample_name', metavar='<str>', help='Name of sample', type=str, required=True)
     parser_gc.add_argument('-m', '--min_depth', metavar='<int>', help='Min depth (default: 1)', type=int, default=1)
+
+    # EleCov
+    parser_ec = sub_parser.add_parser("elecov", help='''Compute genomic element coverage and depth''')
+    parser_ec.add_argument('-a', '--annotation', metavar='<anotation.bed>', help='Path of anotation.bed', type=str,
+                           required=True)
+    parser_ec.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,
+                           required=True)
+    parser_ec.add_argument('-o', '--output', metavar='<output.cov>', help='Path of output cov', type=str, required=True)
+    parser_ec.add_argument('-n', '--sample_name', metavar='<str>', help='Name of sample', type=str, required=True)
+    parser_ec.add_argument('-m', '--min_depth', metavar='<int>', help='Min depth (default: 1)', type=int, default=1)
 
     if len(sys.argv[1:]) == 0:
         parser.print_help()
