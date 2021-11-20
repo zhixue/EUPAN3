@@ -7,10 +7,10 @@
             python3 genecov.py -a ref_pTpG.gff -o xx.cov -n xx -b xx.bed
 """
 import argparse
-from Genome_Interval import *
-from tlog import *
 import os
 import sys
+from Genome_Interval import *
+from tlog import *
 
 
 def readgff(gff, ele_select="CDS"):
@@ -170,6 +170,8 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
 
         # transcript
         for transcript in annotation_dicts[0][chrn][gene]:
+            if not annotation_dicts[0][chrn][gene][transcript]:
+                continue
             transcript_region = annotation_dicts[1][transcript]
             if transcript_region == gene_region:
                 transcript_cov = gene_cov
@@ -256,16 +258,32 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
 def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_least_depth=1):
     current_chrn = ''
     current_anno_idx = 0
-    fout = open(output, 'w')
-    header_cols = ["# Sample", "Chr", "Level", "Gene", "Gene_Region", "Gene_Cov", "Gene_Depth",
-                   "mRNA", "mRNA_Region", "mRNA_Cov", "mRNA_Depth",
-                   "Element", "Element_Region", "Element_Cov", "Element_Depth"]
-    fout.write('\t'.join(header_cols) + '\n')
+    visited_chrns = set()
+    if os.path.isfile(output):
+        logging.warning("# {output} exists!".format(output=output))
+        with open(output) as f:
+            for line in f:
+                if line.startswith('#') or line.startswith('\n'):
+                    continue
+                temp = line.split('\t')
+                if len(temp) >= 2:
+                    visited_chrns.add(line.split('\t')[1])
+        logging.warning("# Skip {n} chromosomes!".format(n=len(visited_chrns)))
+        fout = open(output, 'a')
+    else:
+        fout = open(output, 'w')
+        header_cols = ["# Sample", "Chr", "Level", "Gene", "Gene_Region", "Gene_Cov", "Gene_Depth",
+                       "mRNA", "mRNA_Region", "mRNA_Cov", "mRNA_Depth",
+                       "Element", "Element_Region", "Element_Cov", "Element_Depth"]
+        fout.write('\t'.join(header_cols) + '\n')
     with open(bedfile) as f:
         for line in f:
             temp = line.rstrip().split('\t')
             # skip chromosome without annotations
             if temp[0] not in annotation_dicts[0]:
+                continue
+            # skip visited chromosome
+            if temp[0] in visited_chrns:
                 continue
             if temp[0] != current_chrn:
                 # get depth, cov of last chromosome
@@ -320,7 +338,7 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='''Compute gene coverage''')
+    parser = argparse.ArgumentParser(description='''Compute gene coverage and depth''')
     parser.add_argument('-a', '--annotation', metavar='<input.gff/gtf>', help='Path of input gff/gtf', type=str,
                         required=True)
     parser.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,
@@ -346,6 +364,7 @@ if __name__ == "__main__":
     elif annotation_path.endswith('gff') or annotation_path.endswith('gff3'):
         annotation = readgff(annotation_path, used_region)
     else:
+        annotation = ''
         logging.error("# No gff/gff3/gtf!")
         exit()
 
@@ -353,18 +372,45 @@ if __name__ == "__main__":
     gene_n = 0
     trans_n = 0
     ele_n = 0
+    chrn_used_n = 0
+    gene_used_n = 0
+    trans_used_n = 0
+    chrn_used = 0
+    gene_used = 0
     for chrn in annotation[0]:
         chrn_n += 1
+        chrn_used = 0
         for gene in annotation[0][chrn]:
             gene_n += 1
+            gene_used = 0
             for transcript in annotation[0][chrn][gene]:
                 trans_n += 1
-                ele_n += len(annotation[0][chrn][gene][transcript])
+                temp_elen = len(annotation[0][chrn][gene][transcript])
+                if temp_elen:
+                    trans_used_n += 1
+                    chrn_used = 1
+                    gene_used = 1
+                    ele_n += temp_elen
+            if gene_used:
+                gene_used_n += 1
+        if chrn_used:
+            chrn_used_n += 1
 
-    logging.info('# Load {chrn_n} chromosomes, {gene_n} genes, {tran_n} transcripts, {ele_n} {region}s.'.format(
+    logging.info('# Load {chrn_n} chromosome(s), {gene_n} gene(s), {tran_n} transcript(s), {ele_n} {region}(s).'.format(
         chrn_n=chrn_n,
         gene_n=gene_n,
         tran_n=trans_n,
+        ele_n=ele_n,
+        region=used_region
+    ))
+    if trans_n != trans_used_n:
+        logging.warning('# Drop Chromosome(s)/gene(s)/transcript(s) without {region}(s)!'.format(
+            region=used_region
+        ))
+    logging.info('# Use {chrn_n} chromosome(s), {gene_n} gene(s), {tran_n} transcript(s), {ele_n} {region}(s).'.format(
+        chrn_n=chrn_used_n,
+        gene_n=gene_used_n,
+        tran_n=trans_used_n,
         ele_n=ele_n,
         region=used_region
     ))
