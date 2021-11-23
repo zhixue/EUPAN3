@@ -16,20 +16,28 @@ EUPAN3 is a EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing.
 
 ## 3. Usage
 ```
-usage: eupan3.py [-h] [-v] {assemsta,unalnsseq} ...
+usage: eupan3.py [-h] [-v]
+                 {assemsta,unalnbseq,mergebseq,rmredundant,rmctm,fastasta,ptpg,genecov,elecov}
+                 ...
+
+EUPAN3: EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing
+Version 0.1.0
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show program's version number and exit
 
 sub commands:
-  {assemsta,unalnsseq}
-    assemsta            Use Quast to get assembled contigs/scaffolds to
-                        reference to check the statistics (The script will
-                        call QUAST program, so the directory where quast.py
-                        locates is needed.)
-    unalnsseq           Get partial/full/all unaligned sub sequences of
-                        contigs/scaffolds from Quast
+  {assemsta,unalnbseq,mergebseq,rmredundant,rmctm,fastasta,ptpg,genecov,elecov}
+    assemsta            Use Quast to get assemblies statistics
+    unalnbseq           Get partial/full unaligned block sequences
+    mergebseq           Merge the block sequences from many files
+    rmredundant         Cluster the sequences and remove redundant sequences
+    rmctm               Detect and discard the contaminated sequences
+    fastasta            Calculate statistics of fasta file (DNA)
+    ptpg                Extract the longest transcript elements from genes
+    genecov             Compute gene coverage and depth
+    elecov              Compute genomic element coverage and depth
 ```
 
 ### 3.1 assemsta

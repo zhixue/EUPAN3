@@ -10,21 +10,19 @@ import os
 import sys
 
 DESCRIPTION = """
-EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing (EUPAN3)
+EUPAN3: EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing
                                                                                                          
 """
 VERSION = "Version 0.1.0"
 
 if __name__ == "__main__":
     dir_name, file_name = os.path.split(os.path.abspath(sys.argv[0]))
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(description=DESCRIPTION + VERSION)
     parser.add_argument('-v', '--version', action='version', version=VERSION)
 
     sub_parser = parser.add_subparsers(dest='subcmd', title='sub commands')
     # AssemSta
-    parser_as = sub_parser.add_parser("assemsta", help='Use Quast to get assembled contigs/scaffolds to reference to '
-                                                       'check the statistics  (The script will call QUAST program, '
-                                                       'so the directory where quast.py locates is needed.)')
+    parser_as = sub_parser.add_parser("assemsta", help='''Use Quast to get assemblies statistics''')
     parser_as.add_argument('-a', '--assembly_path', metavar='<assembly.fa>',
                            help='Path of contigs or scaffolds', type=str, required=True)
     parser_as.add_argument('-r', '--reference_path', metavar='<reference.fa>',
@@ -50,9 +48,7 @@ if __name__ == "__main__":
                             help='Use optimal parameters for evaluation of large genomes (typically > 100 Mbp)')
 
     # UnalnBlockSeq
-    parser_ubs = sub_parser.add_parser("unalnbseq",
-                                       help="Get partial/full/all unaligned block sequences of contigs/scaffolds from "
-                                            "Quast")
+    parser_ubs = sub_parser.add_parser("unalnbseq", help='''Get partial/full unaligned block sequences''')
     parser_ubs.add_argument('-a', '--assembly_path', metavar='<assembly.fa>',
                             help='Path of contigs or scaffolds', type=str, required=True)
     parser_ubs.add_argument('-u', '--unaln_path', metavar='<unaligned.info>',
@@ -121,7 +117,7 @@ if __name__ == "__main__":
                            help=' Number of threads when clustering (default: 1)', type=int,
                            default=1)
     # rmCtm
-    parser_rc = sub_parser.add_parser("rmctm", help='''Detect and discard the potentail contaminated sequences''')
+    parser_rc = sub_parser.add_parser("rmctm", help='''Detect and discard the contaminated sequences''')
     parser_rc.add_argument('-i', '--input_fa', metavar='<input.fa>',
                            help='Path of input fasta', type=str, required=True)
     parser_rc.add_argument('-o', '--output_dir', metavar='<output_dir>',
@@ -171,8 +167,7 @@ if __name__ == "__main__":
                            help='Min length of sequences to consider (default: 500)', type=int, default=500)
 
     # pTpG
-    parser_ptpg = sub_parser.add_parser("ptpg", help='''Extract the longest transcript elements' records for each gene, 
-    according to CDS or exon length''')
+    parser_ptpg = sub_parser.add_parser("ptpg", help='''Extract the longest transcript elements from genes''')
     parser_ptpg.add_argument('-i', '--input', metavar='<input.gff/gtf>',
                              help='Path of input gff/gtf', type=str, required=True)
     parser_ptpg.add_argument('-r', '--region', metavar='<str>',
@@ -182,7 +177,7 @@ if __name__ == "__main__":
                              help='Path of output gff/gtf', type=str, required=True)
 
     # GeneCov
-    parser_gc = sub_parser.add_parser("genecov", help='''Compute gene coverage''')
+    parser_gc = sub_parser.add_parser("genecov", help='''Compute gene coverage and depth''')
     parser_gc.add_argument('-a', '--annotation', metavar='<input.gff/gtf>', help='Path of input gff/gtf', type=str,
                            required=True)
     parser_gc.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,
