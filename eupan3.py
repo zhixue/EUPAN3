@@ -39,7 +39,7 @@ if __name__ == "__main__":
                                  'default: 3000)',
                             type=int, default=-1)
     parser_asq.add_argument('-g', '--gff_path', metavar='<reference.gff>',
-                            help='Min length of sequences to consider (default: None)', type=str, default=None)
+                            help='Anotations of reference genome (default: None)', type=str, default=None)
     parser_asq.add_argument('-i', '--identity', metavar='<int>',
                             help='Min alignment identity of sequences (choices: 80/90/95. default: 90)', type=int,
                             choices=[80, 90, 95],
