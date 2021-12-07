@@ -70,6 +70,6 @@ if __name__ == "__main__":
                                                                  min_indentity=args["identity"],
                                                                  assembly=args["assembly_path"]
                                                                  )
-    logging.info("# Start running Quast using this command:\n")
+    logging.info("# Start running Quast using this command:\n{cmd}".format(cmd=command))
     os.system(command)
     logging.info("# Finish running Quast.")
