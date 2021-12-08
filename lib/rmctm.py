@@ -12,7 +12,7 @@ from getTax import gettax, detectcontamination
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='''Detect and discard the potentail contaminated sequences''')
+    parser = argparse.ArgumentParser(description='''Detect and discard the potential contaminated sequences''')
     parser.add_argument('-i', '--input_fa', metavar='<input.fa>',
                         help='Path of input fasta', type=str, required=True)
     parser.add_argument('-o', '--output_dir', metavar='<output_dir>',

@@ -3,14 +3,13 @@
 """
     @Author: Hongzhang Xue
     @Modified: 2021/4/8 2:30 PM
-    @Usage: python3 unalnsseq.py [options]
+    @Usage: python3 unalnbseq.py [options]
 """
 import argparse
 import re
 import os
 from tlog import *
 import Genome_Interval as gi
-import time
 
 
 def trans_contig_name(string_a, char='_'):
@@ -33,7 +32,7 @@ def read_unaln_table(unalign_table_path, kind_unalign, min_len):
             if filtered_interval_list.isempty():
                 continue
             if unaln_type in kind_unalign:
-                unalign_inf_dict[trans_contig_name(temp[0].rstrip())] = tuple(
+                unalign_inf_dict[temp[0].rstrip()] = tuple(
                     (temp[1], temp[2], temp[3], filtered_interval_list))
     return unalign_inf_dict
 
@@ -59,12 +58,18 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                                 block_seq = interval.getsubseq(seq_seq)
                                 if block_seq.count(nbase) / len(block_seq) * 100 > nbase_ignore_precent:
                                     continue
-                                fout.write('>' + sample_tagname + seq_name + ':' + str(
-                                    interval.lower_bound) + '-' + str(interval.upper_bound) + ' ' +
-                                           chrn_intervals[seq_name][2] + '\n')
-                                fout.write(block_seq + '\n')
                                 out_blockseq_num += 1
-                    seq_name = trans_contig_name(line.rstrip()[1:])
+                                bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
+                                    ' ' + seq_anno + \
+                                    ' ' + 'contiglength_' + chrn_intervals[seq_name][1] + \
+                                    ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
+                                    ' ' + 'bseqlength_' + str(interval.length) + \
+                                    ' ' + chrn_intervals[seq_name][2]
+                                fout.write(bseq_anno + '\n')
+                                fout.write(block_seq + '\n')
+
+                    seq_anno = line.rstrip()[1:]
+                    seq_name = seq_anno.split()[0]
                     seq_seq = ''
                 else:
                     seq_seq += line.rstrip()
@@ -76,11 +81,15 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                         block_seq = interval.getsubseq(seq_seq)
                         if block_seq.count('N') / len(block_seq) * 100 > nbase_ignore_precent:
                             continue
-                        fout.write('>' + sample_tagname + seq_name + ':' + str(
-                            interval.lower_bound) + '-' + str(interval.upper_bound) + ' ' + chrn_intervals[seq_name][
-                                       2] + '\n')
-                        fout.write(block_seq + '\n')
                         out_blockseq_num += 1
+                        bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
+                                    ' ' + seq_anno + \
+                                    ' ' + 'contiglength_' + chrn_intervals[seq_name][1] + \
+                                    ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
+                                    ' ' + 'bseqlength_' + str(interval.length) + \
+                                    ' ' + chrn_intervals[seq_name][2]
+                        fout.write(bseq_anno + '\n')
+                        fout.write(block_seq + '\n')
     return in_record_num, out_record_num, out_blockseq_num
 
 
@@ -168,8 +177,6 @@ if __name__ == "__main__":
         kind_use = ['full', 'partial']
     else:
         kind_use = [kind_use]
-    if sample_tag:
-        sample_tag = sample_tag + '_'
 
     if args["realign_reference"]:
         realign_step = 1
@@ -195,7 +202,7 @@ if __name__ == "__main__":
         ))
     if realign_step:
         # check temp dir
-        temp_dir = args["realign_dir"] + '_' + time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+        temp_dir = args["realign_dir"]  # + '_' + time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
         if os.path.isdir(args["realign_dir"]):
             logging.warning("# {temp_path} exists! It will be rewrited!".format(temp_path=temp_dir))
         else:
@@ -212,7 +219,7 @@ if __name__ == "__main__":
             minimap2_idt_par = "-x asm20"
         else:
             minimap2_idt_par = ""
-        temp_paf = "sseqmap2ref.paf"
+        temp_paf = "bseq2ref.paf"
         command = '{minimap2} -t {thread} {idt_par} {ref} {query} > {temp_dir}/{temp_paf}'.format(
             minimap2=args["realign_minimap2"],
             thread=args["realign_thread"],
@@ -225,9 +232,9 @@ if __name__ == "__main__":
         os.system(command)
         logging.info("# Finish realigning block sequences to references.")
         # filter
-        temp_out_seq_list_path = "drop_sseq.txt"
-        temp_out_seq_filtered_path = "remain_sseq.fa"
-        drop_n = drop_seq_from_paf(temp_dir + '/' + temp_paf, temp_dir,
+        temp_out_seq_list_path = "mapped_bseq.txt"
+        temp_out_seq_filtered_path = "remain_bseq.fa"
+        drop_n = drop_seq_from_paf(temp_dir + '/' + temp_paf, args["realign_coverage"],
                                    temp_dir + '/' + temp_out_seq_list_path)
         fsr_return_status = gi.fa_some_record(output_fasta, temp_dir + '/' + temp_out_seq_list_path,
                                               temp_dir + '/' + temp_out_seq_filtered_path, exclude=True)
@@ -237,5 +244,5 @@ if __name__ == "__main__":
         os.system('mv {temp_dir}/{temp_fa} {output_fa}'.format(temp_dir=temp_dir,
                                                                temp_fa=temp_out_seq_filtered_path,
                                                                output_fa=output_fasta))
-        os.system('rm -rf {temp_dir}'.format(temp_dir=temp_dir))
+        # os.system('rm -rf {temp_dir}'.format(temp_dir=temp_dir))
         logging.info("# Realign step is finished.")
