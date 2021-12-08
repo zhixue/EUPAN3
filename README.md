@@ -72,9 +72,9 @@ quast parameters:
   --large_genome        Use optimal parameters for evaluation of large genomes
                         (typically > 100 Mbp)
 ```
-### 3.2 unalnsseq
+### 3.2 unalnbseq
 ```
-usage: eupan3.py unalnsseq [-h] -a <assembly.fa> -u <unaligned.info> -o
+usage: eupan3.py unalnbseq [-h] -a <assembly.fa> -u <unaligned.info> -o
                              <output.fa> [-l <int>] [-k <str>] [-s <str>]
                              [-rr <reference.fa>] [-ri <int>] [-rc <int>]
                              [-rm <minimap2_path>] [-rt <int>] [-rd <str>]
