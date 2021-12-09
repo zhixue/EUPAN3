@@ -61,10 +61,10 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                                 out_blockseq_num += 1
                                 bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
                                     ' ' + seq_anno + \
-                                    ' ' + 'contiglength_' + chrn_intervals[seq_name][1] + \
+                                    ', ' + 'contiglength_' + chrn_intervals[seq_name][0] + \
                                     ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
-                                    ' ' + 'bseqlength_' + str(interval.length) + \
-                                    ' ' + chrn_intervals[seq_name][2]
+                                    ', ' + 'bseqlength_' + str(interval.length) + \
+                                    ', ' + chrn_intervals[seq_name][2]
                                 fout.write(bseq_anno + '\n')
                                 fout.write(block_seq + '\n')
 
@@ -84,10 +84,10 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                         out_blockseq_num += 1
                         bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
                                     ' ' + seq_anno + \
-                                    ' ' + 'contiglength_' + chrn_intervals[seq_name][1] + \
+                                    ', ' + 'contiglength_' + chrn_intervals[seq_name][0] + \
                                     ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
-                                    ' ' + 'bseqlength_' + str(interval.length) + \
-                                    ' ' + chrn_intervals[seq_name][2]
+                                    ', ' + 'bseqlength_' + str(interval.length) + \
+                                    ', ' + chrn_intervals[seq_name][2]
                         fout.write(bseq_anno + '\n')
                         fout.write(block_seq + '\n')
     return in_record_num, out_record_num, out_blockseq_num
