@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     # EleCov
     parser_ec = sub_parser.add_parser("elecov", help='''Compute genomic element coverage and depth''')
-    parser_ec.add_argument('-a', '--annotation', metavar='<anotation.bed>', help='Path of anotation.bed', type=str,
+    parser_ec.add_argument('-a', '--annotation', metavar='<annotation.bed>', help='Path of annotation.bed', type=str,
                            required=True)
     parser_ec.add_argument('-b', '--bed', metavar='<input.bed>', help='bed of of coverage from bedtools', type=str,
                            required=True)
