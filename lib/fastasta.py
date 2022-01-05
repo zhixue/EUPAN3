@@ -51,8 +51,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Calculate statistics of fasta file (DNA)''')
     parser.add_argument('-i', '--input_path', metavar='<input.fa>',
                         help='Path of input fasta file', type=str, required=True)
-    parser.add_argument('-o', '--output_path', metavar='<output.fa>',
-                        help='Path of output fasta file', type=str, required=True)
+    parser.add_argument('-o', '--output_path', metavar='<output.txt>',
+                        help='Path of output txt file', type=str, required=True)
     parser.add_argument('-l', '--length_filter', metavar='<int>',
                         help='Min length of sequences to consider (default: 500)', type=int, default=500)
     args = vars(parser.parse_args())
