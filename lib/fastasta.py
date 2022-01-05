@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2021/6/22 10:54 AM
+    @Modified: 2022/1/5 21:34 PM
     @Usage: python3 fastasta.py -i input.fa -o out fasta_summary.tsv
 """
 import argparse
