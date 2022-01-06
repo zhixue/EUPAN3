@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     # check output dir
     if os.path.isdir(args["output_dir"]):
-        logging.warning("# {output_path} exists! It will be rewrited!".format(output_path=args["output_dir"]))
+        logging.warning("# {output_path} exists!".format(output_path=args["output_dir"]))
     else:
         os.mkdir(args["output_dir"])
         logging.info("# Output path is {output_path}.".format(output_path=args["output_dir"]))
@@ -94,7 +94,7 @@ if __name__ == "__main__":
                                                         args["rl"],
                                                         acc2tax_out)
     logging.info("# Read {accn} accessions, "
-                 "{taxn} taxes, "
+                 "{taxn} taxes; "
                  "{acc2taxn} accessions successfully transformed to taxes".format(accn=load_acc_n,
                                                                                   taxn=load_tax_n,
                                                                                   acc2taxn=successacc2taxid_n))
