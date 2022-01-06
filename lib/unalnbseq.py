@@ -13,7 +13,7 @@ import Genome_Interval as gi
 
 
 def trans_contig_name(string_a, char='_'):
-    return re.sub('[^0-9a-zA-Z]+', char, string_a)
+    return re.sub('[^0-9a-zA-Z]', char, string_a)
 
 
 def read_unaln_table(unalign_table_path, kind_unalign, min_len):
@@ -43,6 +43,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
     out_record_num = 0
     out_blockseq_num = 0
     seq_name = ''
+    seq_name_trans = ''
     seq_seq = ''
 
     with open(output_fa, 'w') as fout:
@@ -51,43 +52,44 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                 if line.startswith('>'):
                     in_record_num += 1
                     # check record
-                    if seq_name != '':
-                        if seq_name in chrn_intervals:
+                    if seq_name_trans != '':
+                        if seq_name_trans in chrn_intervals:
                             out_record_num += 1
-                            for interval in chrn_intervals[seq_name][3].intervals:
+                            for interval in chrn_intervals[seq_name_trans][3].intervals:
                                 block_seq = interval.getsubseq(seq_seq)
                                 if block_seq.count(nbase) / len(block_seq) * 100 > nbase_ignore_precent:
                                     continue
                                 out_blockseq_num += 1
                                 bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
                                     ' ' + seq_anno + \
-                                    ', ' + 'contiglength_' + chrn_intervals[seq_name][0] + \
+                                    ', ' + 'contiglength_' + chrn_intervals[seq_name_trans][0] + \
                                     ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
                                     ', ' + 'bseqlength_' + str(interval.length) + \
-                                    ', ' + chrn_intervals[seq_name][2]
+                                    ', ' + chrn_intervals[seq_name_trans][2]
                                 fout.write(bseq_anno + '\n')
                                 fout.write(block_seq + '\n')
 
                     seq_anno = line.rstrip()[1:]
                     seq_name = seq_anno.split()[0]
+                    seq_name_trans = trans_contig_name(seq_name)
                     seq_seq = ''
                 else:
                     seq_seq += line.rstrip()
             # final one
-            if seq_name != '':
-                if seq_name in chrn_intervals:
+            if seq_name_trans != '':
+                if seq_name_trans in chrn_intervals:
                     out_record_num += 1
-                    for interval in chrn_intervals[seq_name][3].intervals:
+                    for interval in chrn_intervals[seq_name_trans][3].intervals:
                         block_seq = interval.getsubseq(seq_seq)
                         if block_seq.count('N') / len(block_seq) * 100 > nbase_ignore_precent:
                             continue
                         out_blockseq_num += 1
                         bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
                                     ' ' + seq_anno + \
-                                    ', ' + 'contiglength_' + chrn_intervals[seq_name][0] + \
+                                    ', ' + 'contiglength_' + chrn_intervals[seq_name_trans][0] + \
                                     ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
                                     ', ' + 'bseqlength_' + str(interval.length) + \
-                                    ', ' + chrn_intervals[seq_name][2]
+                                    ', ' + chrn_intervals[seq_name_trans][2]
                         fout.write(bseq_anno + '\n')
                         fout.write(block_seq + '\n')
     return in_record_num, out_record_num, out_blockseq_num

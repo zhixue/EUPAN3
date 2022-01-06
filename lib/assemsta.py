@@ -45,13 +45,13 @@ if __name__ == "__main__":
         if args["length_threshold"] == -1:
             length_threshold_par = '-m 3000'
         else:
-            length_threshold_par = '-m ' + args["length_threshold"]
+            length_threshold_par = '-m ' + str(args["length_threshold"])
     else:
         large_par = ''
         if args["length_threshold"] == -1:
             length_threshold_par = '-m 500'
         else:
-            length_threshold_par = '-m ' + args["length_threshold"]
+            length_threshold_par = '-m ' + str(args["length_threshold"])
 
     if args["gff_path"]:
         gff_par = "-g " + args["gff_path"]
