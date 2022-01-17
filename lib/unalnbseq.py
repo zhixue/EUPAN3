@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2021/4/8 2:30 PM
+    @Modified: 2022/1/17 14:30 PM
     @Usage: python3 unalnbseq.py [options]
 """
 import argparse
@@ -52,7 +52,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                 if line.startswith('>'):
                     in_record_num += 1
                     # check record
-                    if seq_name_trans != '':
+                    if seq_name != '':
                         if seq_name_trans in chrn_intervals:
                             out_record_num += 1
                             for interval in chrn_intervals[seq_name_trans][3].intervals:
@@ -76,7 +76,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                 else:
                     seq_seq += line.rstrip()
             # final one
-            if seq_name_trans != '':
+            if seq_name != '':
                 if seq_name_trans in chrn_intervals:
                     out_record_num += 1
                     for interval in chrn_intervals[seq_name_trans][3].intervals:
