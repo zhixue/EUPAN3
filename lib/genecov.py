@@ -19,7 +19,7 @@ def readgff(gff, ele_select="CDS"):
     region_dict = dict()  # {'chr1':[(start,end)]}
     current_gene_id = ''
     current_transcript_id = ''
-    exist_same_element_flag = 0
+    exist_same_element = False
     with open(gff) as f:
         for line in f:
             if line.startswith('#') or line.rstrip() == '':
@@ -40,23 +40,24 @@ def readgff(gff, ele_select="CDS"):
                 current_transcript_id = ele_id
                 if current_transcript_id not in gene_dict[ele.chrn][current_gene_id] and current_gene_id != '':
                     gene_dict[ele.chrn][current_gene_id][current_transcript_id] = dict()
-                    same_element_exist_time = 1
+                    # init element time
+                    uniq_element_exist_time = 1
             elif ele.type == ele_select:
                 # avoid same ID of exon/CDS
                 if ele_id in gene_dict[ele.chrn][current_gene_id][current_transcript_id]:
-                    exist_same_element_flag = 1
+                    exist_same_element = True
                     ele_part = ele_id.split(':')
-                    if ele_part[-1] == str(same_element_exist_time):
-                        ele_id = ':'.join(ele_part[:-1]) + ':' + str(same_element_exist_time + 1)
+                    if ele_part[-1] == str(uniq_element_exist_time):
+                        ele_id = ':'.join(ele_part[:-1]) + ':' + str(uniq_element_exist_time + 1)
                     else:
-                        ele_id += ':' + str(same_element_exist_time + 1)
-                    same_element_exist_time += 1
+                        ele_id += ':' + str(uniq_element_exist_time + 1)
+                    uniq_element_exist_time += 1
                 gene_dict[ele.chrn][current_gene_id][current_transcript_id][ele_id] = 1
             ele_region = (ele.start, ele.end)
             ele_dict[ele_id] = ele_region
             if ele_region not in region_dict[ele.chrn]:
                 region_dict[ele.chrn] += [ele_region]
-    if exist_same_element_flag:
+    if exist_same_element:
         logging.warning("# Exist same ID in " + ele_select + '! Add ":[number]" (e.g. xx:2,...) after the same ID!')
     return gene_dict, ele_dict, region_dict
 
