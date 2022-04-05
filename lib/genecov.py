@@ -256,7 +256,7 @@ def compute_cov(annotation_dicts, anno_list_object, used_region, chrn, sample_ta
     return outresults
 
 
-def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_least_depth=1):
+def scan_bed(bedfile, annotation_dicts, output, used_region, comd, sample_tag='', at_least_depth=1):
     current_chrn = ''
     current_anno_idx = 0
     visited_chrns = set()
@@ -273,10 +273,11 @@ def scan_bed(bedfile, annotation_dicts, output, used_region, sample_tag='', at_l
         fout = open(output, 'a')
     else:
         fout = open(output, 'w')
+        # write '#', command & colnames
         header_cols = ["# Sample", "Chr", "Level", "Gene", "Gene_Region", "Gene_Cov", "Gene_Depth",
                        "mRNA", "mRNA_Region", "mRNA_Cov", "mRNA_Depth",
                        "Element", "Element_Region", "Element_Cov", "Element_Depth"]
-        fout.write('\t'.join(header_cols) + '\n')
+        fout.write('#' + comd + '\n' + '\t'.join(header_cols) + '\n')
     with open(bedfile) as f:
         for line in f:
             temp = line.rstrip().split('\t')
@@ -415,5 +416,5 @@ if __name__ == "__main__":
         ele_n=ele_n,
         region=used_region
     ))
-    scan_bed(bed_path, annotation, output_path, used_region, sample_tag, min_depth)
+    scan_bed(bed_path, annotation, output_path, used_region, ' '.join(sys.argv), sample_tag, min_depth)
     logging.info('# Finish computing coverage and depth.')
