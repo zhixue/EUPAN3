@@ -279,6 +279,50 @@ def fa_some_record(infa_file, ctg_list_file, outfa_file, exclude=False):
     return infa_record_n, ctg_list_recond_n, outfa_record_n
 
 
+def gff_some_record(ingff_file, list_file, outgff_file, key="chr", exclude=False):
+    # key = "ID" or "chr"
+    ingff_record_n, record_list_n, outgff_record_n = 0, 0, 0
+    if ingff_file == outgff_file:
+        return 0, 0, 0
+    # read list_file
+    record_list = []
+    with open(list_file) as flist:
+        for line in flist:
+            if line.startswith('#'):
+                continue
+            record_list += [line.rstrip().split()[0]]
+            record_list_n += 1
+    # read gff
+    write_flag = exclude
+    with open(outgff_file, 'w') as fout:
+        with open(ingff_file) as fin:
+            for line in fin:
+                if line.startswith('#'):
+                    continue
+                ingff_record_n += 1
+
+                if key == "chr":
+                    used_key = line.rstrip().split()[0]
+                elif key == "ID":
+                    used_key = string2dict(line.rstrip().split('\t')[-1])["ID"]
+
+                if used_key in record_list:
+                    if exclude:
+                        write_flag = 0
+                    else:
+                        write_flag = 1
+                        outgff_record_n += 1
+                else:
+                    if exclude:
+                        write_flag = 1
+                        outgff_record_n += 1
+                    else:
+                        write_flag = 0
+                if write_flag:
+                    fout.write(line)
+            return ingff_record_n, record_list_n, outgff_record_n
+
+
 def gclust2fa(fasta_file, clust_file, out_fa):
     if fasta_file == out_fa:
         return 0
@@ -321,6 +365,14 @@ def string2dict(long_string, sep=';', eq='=', rm_quote=False):
         key, value = i.split(eq)
         out_dict[key] = value
     return out_dict
+
+
+def dict2string(long_dict, sep=';', eq='='):
+    long_string = ''
+    for i in long_dict:
+        key, value = i, long_dict[i]
+        long_string += str(key) + eq + str(value) + sep
+    return long_string
 
 
 # gff
@@ -443,11 +495,12 @@ class GTFVirtual(object):
     def get_length(self):
         return self.end - self.start + 1
 
+
 # bed
 class BEDElement(object):
     def __init__(self, line_string):  # https://m.ensembl.org/info/website/upload/bed.html
         self.string = line_string  # including '\n'
-        self.chrn,  self.start, self.end = line_string.rstrip().split('\t')[:3]
+        self.chrn, self.start, self.end = line_string.rstrip().split('\t')[:3]
         # update start, end
         # [0-based, right open] to [1-based, right closed]
         self.start = int(self.start) + 1
@@ -455,4 +508,3 @@ class BEDElement(object):
         if self.start > self.end:
             self.start, self.end = self.end, self.start
         self.region = (self.start, self.end)
-

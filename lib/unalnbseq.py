@@ -10,6 +10,7 @@ import re
 import os
 from tlog import *
 import Genome_Interval as gi
+import time
 
 
 def trans_contig_name(string_a, char='_'):
@@ -32,12 +33,13 @@ def read_unaln_table(unalign_table_path, kind_unalign, min_len):
             if filtered_interval_list.isempty():
                 continue
             if unaln_type in kind_unalign:
-                unalign_inf_dict[temp[0].rstrip()] = tuple(
+                unalign_inf_dict[trans_contig_name(temp[0].rstrip())] = tuple(
                     (temp[1], temp[2], temp[3], filtered_interval_list))
     return unalign_inf_dict
 
 
-def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nbase_ignore_precent=100, nbase='N'):
+def write_interval_seq(fasta_file, chrn_intervals, output_fa,
+                       unalign_path, sample_tagname, nbase_ignore_precent=100, nbase='N'):
     # init
     in_record_num = 0
     out_record_num = 0
@@ -45,6 +47,8 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
     seq_name = ''
     seq_name_trans = ''
     seq_seq = ''
+    bseq_prefix = sample_tagname + '_' + 'bs'
+    gff_string = ''
 
     with open(output_fa, 'w') as fout:
         with open(fasta_file) as fin:
@@ -60,12 +64,17 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                                 if block_seq.count(nbase) / len(block_seq) * 100 > nbase_ignore_precent:
                                     continue
                                 out_blockseq_num += 1
-                                bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
-                                    ' ' + seq_anno + \
-                                    ', ' + 'contiglength_' + chrn_intervals[seq_name_trans][0] + \
-                                    ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
-                                    ', ' + 'bseqlength_' + str(interval.length) + \
-                                    ', ' + chrn_intervals[seq_name_trans][2]
+                                bseq_anno = '>' + bseq_prefix + str(out_blockseq_num) + \
+                                            ' ' + seq_anno + \
+                                            ', ' + 'contiglength_' + chrn_intervals[seq_name_trans][0] + \
+                                            ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
+                                            ', ' + 'bseqlength_' + str(interval.length) + \
+                                            ', ' + chrn_intervals[seq_name_trans][2]
+                                gff_cols = [seq_name, "eupan3", "unalignblock", str(interval.lower_bound),
+                                            str(interval.upper_bound), '.', '.', '.',
+                                            gi.dict2string({"ID": bseq_prefix + str(out_blockseq_num),
+                                                            "length": str(interval.length)})]
+                                gff_string += '\t'.join(gff_cols) + '\n'
                                 fout.write(bseq_anno + '\n')
                                 fout.write(block_seq + '\n')
 
@@ -84,14 +93,25 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa, sample_tagname, nb
                         if block_seq.count('N') / len(block_seq) * 100 > nbase_ignore_precent:
                             continue
                         out_blockseq_num += 1
-                        bseq_anno = '>' + sample_tagname + '_' + 'bseq' + str(out_blockseq_num) + \
+                        bseq_anno = '>' + bseq_prefix + str(out_blockseq_num) + \
                                     ' ' + seq_anno + \
                                     ', ' + 'contiglength_' + chrn_intervals[seq_name_trans][0] + \
                                     ':' + str(interval.lower_bound) + '-' + str(interval.upper_bound) + \
                                     ', ' + 'bseqlength_' + str(interval.length) + \
                                     ', ' + chrn_intervals[seq_name_trans][2]
+                        gff_cols = [seq_name, "eupan3", "unalignblock", str(interval.lower_bound),
+                                    str(interval.upper_bound), '.', '.', '.',
+                                    gi.dict2string({"ID": bseq_prefix + str(out_blockseq_num),
+                                                    "length": str(interval.length)})]
+                        gff_string += '\t'.join(gff_cols)
                         fout.write(bseq_anno + '\n')
                         fout.write(block_seq + '\n')
+    # write gff
+    with open(output_fa + '.gff', 'w') as fout:
+        fout.write("# Generate from {file1} and {file2}.\n".format(
+            file1=fasta_file,
+            file2=unalign_path
+        ) + gff_string)
     return in_record_num, out_record_num, out_blockseq_num
 
 
@@ -167,6 +187,9 @@ if __name__ == "__main__":
     parserr.add_argument('-rd', '--realign_dir', metavar='<str>',
                          help='[Only use when -rr on] Temp directory to realign (default: unalnbseq_temp_[Time])',
                          type=str, default='unalnbseq_temp')
+    parserr.add_argument('-rk', '--realign_keepdir', metavar='<int>', choices=[0, 1],
+                         help='[Only use when -rr on] Keep temp directory (default: 0)',
+                         type=int, default=0)
     args = vars(parser.parse_args())
     assembly_file = args['assembly_path']
     unalign_table = args['unaln_path']
@@ -192,23 +215,35 @@ if __name__ == "__main__":
     logging.info(
         "# Load {record_n} chromosomes/contigs/scaffolds from unalign.info".format(record_n=len(unalign_dict.keys())))
     input_record_num, output_record_num, output_blockseq_num = write_interval_seq(assembly_file, unalign_dict,
-                                                                                  output_fasta, sample_tag,
-                                                                                  nbase_ignore)
+                                                                                  output_fasta,  unalign_table,
+                                                                                  sample_tag, nbase_ignore)
     logging.info(
-        "# Load {inseq_n} chromosomes/contigs/scaffolds from fasta, write {outseq_n} sequences with {blockoutseq_n} "
-        "block "
-        "sequences.".format(
+        "# Load {inseq_n} chromosomes/contigs/scaffolds from fasta, write {blockoutseq_n} blocks "
+        "from {outseq_n} chromosomes/contigs/scaffolds.".format(
             inseq_n=input_record_num,
             outseq_n=output_record_num,
             blockoutseq_n=output_blockseq_num
         ))
+
+    # check if blocks are got
+    if output_blockseq_num == 0:
+        logging.error("# No blocks are get, please check names in {af} and {ut} are same.".format(
+            af=assembly_file,
+            ut=unalign_table
+        ))
+        exit(1)
+
     if realign_step:
         # check temp dir
-        temp_dir = args["realign_dir"]  # + '_' + time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
-        if os.path.isdir(args["realign_dir"]):
+        if args["realign_dir"] == "unalnbseq_temp":
+            temp_dir = args["realign_dir"] + '_' + time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+        else:
+            # self defined dir
+            temp_dir = args["realign_dir"]
+        if os.path.isdir(temp_dir):
             logging.warning("# {temp_path} exists! It will be rewrited!".format(temp_path=temp_dir))
         else:
-            os.mkdir(args["realign_dir"])
+            os.mkdir(temp_dir)
             logging.info("# Realign path is {temp_path}.".format(temp_path=temp_dir))
 
         # map with minimap2
@@ -236,15 +271,22 @@ if __name__ == "__main__":
         # filter
         temp_out_seq_list_path = "mapped_bseq.txt"
         temp_out_seq_filtered_path = "remain_bseq.fa"
+        temp_out_gff_filtered_path = "remain_bseq.gff"
         drop_n = drop_seq_from_paf(temp_dir + '/' + temp_paf, args["realign_coverage"],
                                    temp_dir + '/' + temp_out_seq_list_path)
         fsr_return_status = gi.fa_some_record(output_fasta, temp_dir + '/' + temp_out_seq_list_path,
                                               temp_dir + '/' + temp_out_seq_filtered_path, exclude=True)
+        gsr_return_status = gi.gff_some_record(output_fasta + ".gff", temp_dir + '/' + temp_out_seq_list_path,
+                                               temp_dir + '/' + temp_out_gff_filtered_path, key="ID", exclude=True)
         logging.info("# Remove {n} block sequences similiar to references.".format(n=drop_n))
         # mv and rm temp dir
         logging.info("# Update block sequences and remove temp files.")
-        os.system('mv {temp_dir}/{temp_fa} {output_fa}'.format(temp_dir=temp_dir,
+        os.system('cp {temp_dir}/{temp_fa} {output_fa}'.format(temp_dir=temp_dir,
                                                                temp_fa=temp_out_seq_filtered_path,
                                                                output_fa=output_fasta))
-        # os.system('rm -rf {temp_dir}'.format(temp_dir=temp_dir))
+        os.system('cp {temp_dir}/{temp_gff} {output_gff}'.format(temp_dir=temp_dir,
+                                                                 temp_gff=temp_out_gff_filtered_path,
+                                                                 output_gff=output_fasta + ".gff"))
+        if not args["realign_keepdir"]:
+            os.system('rm -rf {temp_dir}'.format(temp_dir=temp_dir))
         logging.info("# Realign step is finished.")
