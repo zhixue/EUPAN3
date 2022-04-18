@@ -279,8 +279,8 @@ if __name__ == "__main__":
         gsr_return_status = gi.gff_some_record(output_fasta + ".gff", temp_dir + '/' + temp_out_seq_list_path,
                                                temp_dir + '/' + temp_out_gff_filtered_path, key="ID", exclude=True)
         logging.info("# Remove {n} block sequences similiar to references.".format(n=drop_n))
-        # mv and rm temp dir
-        logging.info("# Update block sequences and remove temp files.")
+        # mv / rm temp files
+        logging.info("# Update block sequences.")
         os.system('cp {temp_dir}/{temp_fa} {output_fa}'.format(temp_dir=temp_dir,
                                                                temp_fa=temp_out_seq_filtered_path,
                                                                output_fa=output_fasta))
@@ -288,5 +288,6 @@ if __name__ == "__main__":
                                                                  temp_gff=temp_out_gff_filtered_path,
                                                                  output_gff=output_fasta + ".gff"))
         if not args["realign_keepdir"]:
+            logging.info("# Remove temp files.")
             os.system('rm -rf {temp_dir}'.format(temp_dir=temp_dir))
         logging.info("# Realign step is finished.")
