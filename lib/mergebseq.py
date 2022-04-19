@@ -14,10 +14,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Merge the block sequences from many files''')
     parser.add_argument('-o', '--output_fa', metavar='<output.fa>',
                         help='Path of output fasta', type=str, default='merged_unaln.fa')
-    parser.add_argument('--allow_samectg', action='store_true',
-                        help='Allow the sample contig/scaffold name', default=False)
+    parser.add_argument('--allow_samename', action='store_true',
+                        help='Allow the sample sequence name', default=False)
     parser.add_argument('input_fa', nargs='+',
-                        help='Path of input fasta', type=str)
+                        help='Path of inputs with fasta', type=str)
     args = vars(parser.parse_args())
     try:
         if os.path.isfile(args['output_fa']):
