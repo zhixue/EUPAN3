@@ -90,7 +90,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
                     out_record_num += 1
                     for interval in chrn_intervals[seq_name_trans][3].intervals:
                         block_seq = interval.getsubseq(seq_seq)
-                        if block_seq.count('N') / len(block_seq) * 100 > nbase_ignore_precent:
+                        if block_seq.count('N') / len(block_seq) * 100 >= nbase_ignore_precent:
                             continue
                         out_blockseq_num += 1
                         bseq_anno = '>' + bseq_prefix + str(out_blockseq_num) + \
