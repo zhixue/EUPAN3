@@ -375,6 +375,47 @@ def dict2string(long_dict, sep=';', eq='='):
     return long_string
 
 
+def cut_fasta(rawfa, newfa, window_size=10000, nbase_ignore_precent=100, nbase='N'):
+    seqid = ''
+    seq = ''
+    with open(newfa, 'w') as fout:
+        with open(rawfa) as fin:
+            for line in fin:
+                if line.startswith('>'):
+                    if seqid != '':
+                        # write
+                        seqlen = len(seq)
+                        if seqlen % window_size == 0:
+                            seqn = int(seqlen / window_size)
+                        else:
+                            seqn = seqlen // window_size + 1
+                        for i in range(seqn):
+                            temp_seqid = seqid + '.' + str(i)
+                            temp_seq = seq[i * window_size: min((i + 1) * window_size, seqlen)]
+                            if temp_seq.count(nbase) / len(temp_seq) * 100 >= nbase_ignore_precent:
+                                continue
+                            fout.write(temp_seqid + '\n' + temp_seq + '\n')
+
+                    seqid = line.rstrip().split()[0]
+                    seq = ''
+                else:
+                    seq += line.rstrip()
+        # final
+        # write
+        seqlen = len(seq)
+        if seqlen % window_size == 0:
+            seqn = int(seqlen / window_size)
+        else:
+            seqn = seqlen // window_size + 1
+        for i in range(seqn):
+            temp_seqid = seqid + '.' + str(i)
+            temp_seq = seq[i * window_size: min((i + 1) * window_size, seqlen)]
+            if temp_seq.count(nbase) / len(temp_seq) * 100 >= nbase_ignore_precent:
+                continue
+            fout.write(temp_seqid + '\n' + temp_seq + '\n')
+
+
+
 # gff
 class GFFElement(object):
     def __init__(self, line_string):  # https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md
