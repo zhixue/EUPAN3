@@ -95,10 +95,10 @@ def detectcontamination(blastout, tax_accession_out, idt, lth, whitelist,
             qstart_idx = 5
             qend_idx = 6
             # high similar record
-            if float(temp[idt_idx]) >= idt and float(temp[lth_idx]) >= lth:
+            if float(temp[idt_idx]) >= idt and int(temp[lth_idx]) >= lth:
                 acc = temp[1].split('.')[0]
-                qstart = float(temp[qstart_idx])
-                qend = float(temp[qend_idx])
+                qstart = int(temp[qstart_idx])
+                qend = int(temp[qend_idx])
                 query = temp[0]
                 if acc in blackacc:
                     if query not in blackquery:

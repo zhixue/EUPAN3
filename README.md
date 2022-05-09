@@ -190,7 +190,7 @@ filter parameters:
                         legal tax, others will be considered as contamination
                         (default: Viridiplantae)
   -ai <int>, --alignment_identity <int>
-                        Alignment identity threshold (default: 90)
+                        Alignment identity threshold (default: 70)
   -al <int>, --alignment_length <int>
                         Alignment length threshold (default: 100)
   --force_remove        Force remove all contamination even if same regions of

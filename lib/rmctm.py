@@ -37,7 +37,7 @@ if __name__ == "__main__":
                          help='legal taxonomies, others will be considered as contaminations (default: Viridiplantae)',
                          type=str, default='Viridiplantae')
     parserf.add_argument('-ai', '--alignment_identity', metavar='<int>',
-                         help='Alignment identity threshold (default: 90)', type=int, default=90)
+                         help='Alignment identity threshold (default: 70)', type=int, default=70)
     parserf.add_argument('-al', '--alignment_length', metavar='<int>',
                          help='Alignment length threshold (default: 100)', type=int, default=100)
     parserf.add_argument('--force_remove', default=False, action='store_true',
