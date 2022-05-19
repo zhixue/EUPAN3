@@ -103,11 +103,11 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
                                     str(interval.upper_bound), '.', '.', '.',
                                     gi.dict2string({"ID": bseq_prefix + str(out_blockseq_num),
                                                     "length": str(interval.length)})]
-                        gff_string += '\t'.join(gff_cols)
+                        gff_string += '\t'.join(gff_cols) + '\n'
                         fout.write(bseq_anno + '\n')
                         fout.write(block_seq + '\n')
     # write gff
-    with open(output_fa + '.gff', 'w') as fout:
+    with open(output_fa + '.gff3', 'w') as fout:
         fout.write("# Generate from {file1} and {file2}.\n".format(
             file1=fasta_file,
             file2=unalign_path
