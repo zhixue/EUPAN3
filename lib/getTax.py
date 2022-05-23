@@ -4,13 +4,9 @@
 import logging
 import sys
 import tlog
+from Genome_Interval import overlap
 
 
-def overlap(a, b, min_overlap_len=1):
-    if a[1] < b[0] + min_overlap_len or a[0] > b[1] - min_overlap_len:
-        return 0
-    else:
-        return 1
 
 
 def gettax(input_acc_file, acc2taxid_file, ranklineage_file, acctax_output, acc_col=2):

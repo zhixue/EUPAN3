@@ -362,7 +362,11 @@ def string2dict(long_string, sep=';', eq='=', rm_quote=False):
     out_dict = dict()
     tmp = long_string.rstrip(sep).split(sep)
     for i in tmp:
-        key, value = i.split(eq)
+        if len(i.split(eq)) == 2:
+            key, value = i.split(eq)
+        else:
+            key = i.split(eq)[0]
+            value = eq.join(i.split(eq)[1:])
         out_dict[key] = value
     return out_dict
 
@@ -373,6 +377,13 @@ def dict2string(long_dict, sep=';', eq='='):
         key, value = i, long_dict[i]
         long_string += str(key) + eq + str(value) + sep
     return long_string
+
+
+def overlap(a, b, min_overlap_len=1):
+    if a[1] < b[0] + min_overlap_len or a[0] > b[1] - min_overlap_len:
+        return 0
+    else:
+        return 1
 
 
 def cut_fasta(rawfa, newfa, window_size=10000, nbase_ignore_precent=100, nbase='N'):
@@ -423,6 +434,8 @@ class GFFElement(object):
         # type only support: gene, mRNA/transcript, exon, CDS, five_prime_UTR, three_prime_UTR, start_codon, end_codon
         self.chrn, self.source, self.type, self.start, self.end, \
         self.score, self.strand, self.phase, self.attributes = line_string.rstrip().split('\t')[:9]
+        if self.attributes[-1] != ';':
+            self.attributes += ';'
         self.details = string2dict(self.attributes)
         # update start, end
         self.start = int(self.start)
@@ -444,6 +457,10 @@ class GFFElement(object):
 
     def get_length(self):
         return self.end - self.start + 1
+
+    def tostring(self):
+        return '\t'.join([str(x) for x in [self.chrn, self.source, self.type, self.start, self.end,
+                          self.score, self.strand, self.phase, self.attributes]])
 
 
 class GFFTranscript(GFFElement):
