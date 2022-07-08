@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2021/4/28 3:32 PM
+    @Modified: 2022/7/7 3:32 PM
     @Usage: python3 ptpg.py -i x.gtf/x.gff3 -r cds -o x_pTpG.gtf/x_pTpG.gff
 """
 import os
@@ -91,6 +91,7 @@ def ptpg_gtf(ingtf, region, outgtf):
 def ptpg_gff(ingff, region, outgff):
     gene_length_dict = dict()  # {'gene1':{'mRNA1':89,'mRNA2':81}}
     transcripts_dict = dict()  # {'mRNA1':[(120,200),(202,209)],'mRNA2':[(120,200)]}
+    parent_dict = dict()
 
     with open(ingff) as f:
         for line in f:
@@ -104,21 +105,37 @@ def ptpg_gff(ingff, region, outgff):
             line_type = temp[2]
 
             lineid = string2dict(temp[-1])['ID']
-            if line_type == 'gene':
+            if line_type in ('gene', 'pseudogene'):
                 gene_length_dict[lineid] = dict()
             elif line_type in ('transcript', 'mRNA'):
                 geneid = string2dict(temp[-1])['Parent']
                 transcriptid = lineid
-                gene_length_dict[geneid][transcriptid] = 0
-                transcripts_dict[transcriptid] = []
+                parent_dict[transcriptid] = geneid
+                if geneid in gene_length_dict:
+                    gene_length_dict[geneid][transcriptid] = 0
+                    transcripts_dict[transcriptid] = []
+                else:
+                    pass
+                    logging.warning("# mRNA record: {geneid} (Parent of {transcriptid}) has something wrong.".format(
+                        geneid=geneid,
+                        transcriptid=transcriptid
+                    ))
             elif line_type == region:
                 transcriptid = string2dict(temp[-1])['Parent']
                 # avoid same id of exon/CDS
                 # e_id = lineid
+                geneid = parent_dict[transcriptid]
                 e_start = int(temp[3])
                 e_end = int(temp[4])
-                transcripts_dict[transcriptid] += [(e_start, e_end)]
-                gene_length_dict[geneid][transcriptid] += e_end - e_start + 1
+                if transcriptid in transcripts_dict and geneid in gene_length_dict:
+                    transcripts_dict[transcriptid] += [(e_start, e_end)]
+                    gene_length_dict[geneid][transcriptid] += e_end - e_start + 1
+                else:
+                    logging.warning("# {ele} record: {geneid} (Parent of {transcriptid}) has something wrong.".format(
+                        ele=region,
+                        geneid=geneid,
+                        transcriptid=transcriptid
+                    ))
     logging.info("# Load {n1} genes, {n2} transcripts.".format(n1=len(gene_length_dict), n2=len(transcripts_dict)))
 
     # get max
@@ -134,6 +151,8 @@ def ptpg_gff(ingff, region, outgff):
 
     # write
     write_gene_n = 0
+    geneline = ''
+    transcriptline = ''
     with open(ingff) as f:
         with open(outgff, 'w') as fout:
             for line in f:
@@ -148,7 +167,7 @@ def ptpg_gff(ingff, region, outgff):
                 attr = string2dict(temp[-1])
                 lineid = attr['ID']
                 # may not write genes, transcripts with no exon/CDS
-                if line_type == 'gene':
+                if line_type in ('gene', 'pseudogene'):
                     geneline = line
                 elif line_type in ('transcript', 'mRNA'):
                     geneid = attr['Parent']
@@ -156,7 +175,14 @@ def ptpg_gff(ingff, region, outgff):
                     if transcriptid in gene_length_dict[geneid]:
                         transcriptline = line
                 else:
-                    transcriptid = attr['Parent']
+                    try:
+                        transcriptid = attr['Parent']
+                    except Exception as e:
+                        logging.warning('# Unknown record: type={tp}, ele={ele}'.format(
+                            tp=line_type,
+                            ele=lineid
+                        ))
+                        continue
                     if transcriptid in gene_length_dict[geneid]:
                         if gene_length_dict[geneid][transcriptid] > 0:
                             if geneline != '' and transcriptline != '':

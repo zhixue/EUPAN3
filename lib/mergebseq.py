@@ -14,8 +14,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Merge the block sequences from many files''')
     parser.add_argument('-o', '--output_fa', metavar='<output.fa>',
                         help='Path of output fasta', type=str, default='merged_unaln.fa')
-    parser.add_argument('--allow_samename', action='store_true',
-                        help='Allow the sample sequence name', default=False)
+    parser.add_argument('--ignore_samename', action='store_true',
+                        help='Ignore the sample sequence name', default=False)
     parser.add_argument('input_fa', nargs='+',
                         help='Path of inputs with fasta', type=str)
     args = vars(parser.parse_args())
@@ -31,17 +31,21 @@ if __name__ == "__main__":
             for in_file in in_files:
                 with open(in_file) as fin:
                     ctg_n_in_this_file = 0
+                    write_flag = 1
                     open_in_file_n += 1
                     for line in fin:
                         if line.startswith('>'):
+                            write_flag = 1
                             ctg_tag = line[1:].rstrip()
                             ctg_name = ctg_tag.split()[0]
                             if ctg_name in visited_ctg:
-                                if not args['allow_samectg']:
+                                if not args['ignore_samename']:
                                     raise ValueError("# Same contig/scaffold name exists: %s !" % ctg_name)
+                                write_flag = 0
                             visited_ctg[ctg_name] = 1
                             ctg_n_in_this_file += 1
-                        fout.write(line)
+                        if write_flag:
+                            fout.write(line)
                     logging.info("# Load {file} with {n} block sequences.".format(file=in_file, n=ctg_n_in_this_file))
         logging.info("# Total load {file_n} input files, with {ctg_n} block sequences.".format(file_n=open_in_file_n,
                                                                                                ctg_n=len(visited_ctg)))
