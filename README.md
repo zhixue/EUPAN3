@@ -3,6 +3,8 @@
 ## 1. Introduction
 EUPAN3 is a EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing.
 
+The overview of pipeline is as follows:
+![pipeline](https://github.com/zhixue/EUPAN3/pics/pipeline.jpg)
 
 ## 2. Install
 ### Dependency
