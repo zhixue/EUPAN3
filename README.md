@@ -1,5 +1,5 @@
 # EUPAN3
-
+(The project is under development.)
 ## 1. Introduction
 EUPAN3 is a EUkaryote Pan-genome ANalysis toolkit for 3rd generation sequencing.
 
