@@ -276,7 +276,7 @@ if __name__ == "__main__":
                                    temp_dir + '/' + temp_out_seq_list_path)
         fsr_return_status = gi.fa_some_record(output_fasta, temp_dir + '/' + temp_out_seq_list_path,
                                               temp_dir + '/' + temp_out_seq_filtered_path, exclude=True)
-        gsr_return_status = gi.gff_some_record(output_fasta + ".gff", temp_dir + '/' + temp_out_seq_list_path,
+        gsr_return_status = gi.gff_some_record(output_fasta + ".gff3", temp_dir + '/' + temp_out_seq_list_path,
                                                temp_dir + '/' + temp_out_gff_filtered_path, key="ID", exclude=True)
         logging.info("# Remove {n} block sequences similiar to references.".format(n=drop_n))
         # mv / rm temp files
@@ -286,7 +286,7 @@ if __name__ == "__main__":
                                                                output_fa=output_fasta))
         os.system('cp {temp_dir}/{temp_gff} {output_gff}'.format(temp_dir=temp_dir,
                                                                  temp_gff=temp_out_gff_filtered_path,
-                                                                 output_gff=output_fasta + ".gff"))
+                                                                 output_gff=output_fasta + ".gff3"))
         if not args["realign_keepdir"]:
             logging.info("# Remove temp files.")
             os.system('rm -rf {temp_dir}'.format(temp_dir=temp_dir))
