@@ -298,7 +298,7 @@ def gff_some_record(ingff_file, list_file, outgff_file, key="chr", exclude=False
         with open(ingff_file) as fin:
             for line in fin:
                 if line.startswith('#'):
-                    continue
+                    fout.write(line)
                 ingff_record_n += 1
 
                 if key == "chr":

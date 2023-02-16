@@ -131,13 +131,33 @@ def drop_seq_from_paf(paf_path, least_coverage, out_seq_list_path):
     # 12 int, mapping quality (0~255,255:missing)
     with open(paf_path) as fin:
         with open(out_seq_list_path, 'w') as fout:
+            seq_cov_dict = dict()
             output_set = set()
             for line in fin:
                 temp = line.rstrip().split('\t')
-                if float(temp[9]) / float(temp[1]) * 100 >= least_coverage:
+                # qcov 0 ~ 100
+                qcov = float(temp[9]) / float(temp[1]) * 100
+                # write seq cov 0 ~ 1
+                seq_cov_dict[temp[0]] = qcov / 100
+                if qcov >= least_coverage:
                     output_set.add(temp[0])
             fout.write('\n'.join(output_set))
-    return len(output_set)
+    return len(output_set), seq_cov_dict
+
+
+def gff_add_cov(rawgff, newgff, cov_dict):
+    with open(rawgff) as fin:
+        with open(newgff, 'w') as fout:
+            for line in fin:
+                if line.startswith('#'):
+                    continue
+                temp = line.rstrip().split('\t')
+                seqid = gi.string2dict(temp[8])['ID']
+                if seqid in cov_dict:
+                    fout.write(line.rstrip() + "qcov={i};\n".format(i=str(round(cov_dict[seqid], 3))))
+                else:
+                    fout.write(line.rstrip() + "qcov={i};\n".format(i=str(0)))
+    return len(cov_dict)
 
 
 if __name__ == "__main__":
@@ -166,7 +186,7 @@ if __name__ == "__main__":
 
     parserr = parser.add_argument_group('realign parameters')
     parserr.add_argument('-rr', '--realign_reference', metavar='<reference.fa>',
-                         help='Using minimap2 to realign  to reference genome/mitochondrion/plastid and drop high '
+                         help='Using minimap2 to realign to reference genome/mitochondrion/plastid and drop high '
                               'similar unaligned block sequences',
                          type=str, default='')
     parserr.add_argument('-ri', '--realign_identity', metavar='<int>',
@@ -175,7 +195,7 @@ if __name__ == "__main__":
                          type=int, choices=[80, 90, 95],
                          default=90)
     parserr.add_argument('-rc', '--realign_coverage', metavar='<int>',
-                         help='[Only use when -rr on] Min alignment coverage of sequences (default: 80)',
+                         help='[Only use when -rr on] Min alignment coverage of dropped sequences (default: 80)',
                          type=int,
                          default=80)
     parserr.add_argument('-rm', '--realign_minimap2', metavar='<minimap2_path>',
@@ -215,7 +235,7 @@ if __name__ == "__main__":
     logging.info(
         "# Load {record_n} chromosomes/contigs/scaffolds from unalign.info".format(record_n=len(unalign_dict.keys())))
     input_record_num, output_record_num, output_blockseq_num = write_interval_seq(assembly_file, unalign_dict,
-                                                                                  output_fasta,  unalign_table,
+                                                                                  output_fasta, unalign_table,
                                                                                   sample_tag, nbase_ignore)
     logging.info(
         "# Load {inseq_n} chromosomes/contigs/scaffolds from fasta, write {blockoutseq_n} blocks "
@@ -268,15 +288,28 @@ if __name__ == "__main__":
         )
         os.system(command)
         logging.info("# Finish realigning block sequences to references.")
-        # filter
+        # scan paf
         temp_out_seq_list_path = "mapped_bseq.txt"
+        drop_n, seq_cov = drop_seq_from_paf(temp_dir + '/' + temp_paf, args["realign_coverage"],
+                                            temp_dir + '/' + temp_out_seq_list_path)
+        # copy raw bsq.gff
+        temp_out_gff_raw_path = "unalign_bseq.gff3"
+        os.system('cp {output_gff} {temp_dir}/{temp_gff}'.format(temp_dir=temp_dir,
+                                                                 temp_gff=temp_out_gff_raw_path,
+                                                                 output_gff=output_fasta + ".gff3"))
+        # add query cov in gff
+        aqc_return_status = gff_add_cov(temp_dir + '/' + temp_out_gff_raw_path,
+                                        temp_dir + '/' + 'temp.gff3',
+                                        seq_cov)
+        os.system('mv {newgff} {oldgff}'.format(newgff=temp_dir + '/' + 'temp.gff3',
+                                                oldgff=temp_dir + '/' + temp_out_gff_raw_path))
+        # filter bseq.fa and bseq.gff
         temp_out_seq_filtered_path = "remain_bseq.fa"
-        temp_out_gff_filtered_path = "remain_bseq.gff"
-        drop_n = drop_seq_from_paf(temp_dir + '/' + temp_paf, args["realign_coverage"],
-                                   temp_dir + '/' + temp_out_seq_list_path)
+        temp_out_gff_filtered_path = "remain_bseq.gff3"
         fsr_return_status = gi.fa_some_record(output_fasta, temp_dir + '/' + temp_out_seq_list_path,
                                               temp_dir + '/' + temp_out_seq_filtered_path, exclude=True)
-        gsr_return_status = gi.gff_some_record(output_fasta + ".gff3", temp_dir + '/' + temp_out_seq_list_path,
+        gsr_return_status = gi.gff_some_record(temp_dir + '/' + temp_out_gff_raw_path,
+                                               temp_dir + '/' + temp_out_seq_list_path,
                                                temp_dir + '/' + temp_out_gff_filtered_path, key="ID", exclude=True)
         logging.info("# Remove {n} block sequences similiar to references.".format(n=drop_n))
         # mv / rm temp files
