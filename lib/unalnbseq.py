@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2022/1/17 14:30 PM
+    @Modified: 2023/2/16 20:35 PM
     @Usage: python3 unalnbseq.py [options]
 """
 import argparse
