@@ -10,7 +10,7 @@ from tlog import *
 import os
 import sys
 import Genome_Interval as gi
-
+from minimap2clust import minimap2clust
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''Cluster the sequences and remove redundant sequences''')
@@ -21,8 +21,8 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--sequence_identity', metavar='<int>',
                         help='Sequence identity threshold (default: 90)', type=int, default=90)
     parser.add_argument('-m', '--method_path', metavar='<cluter_method_path>',
-                        help='Path of cluster method, support gclust/cd-hit-est/blastn (default: gclust in $PATH)',
-                        type=str, default='gclust')
+                        help='Path of cluster tool, support gclust/cd-hit-est/blastn/minimap2 (default: minimap2)',
+                        type=str, default='minimap2')
     parser.add_argument('-t', '--thread', metavar='<int>',
                         help=' Number of threads when clustering (default: 1)', type=int,
                         default=1)
@@ -48,7 +48,7 @@ if __name__ == "__main__":
                   "--sortedgenomes-file {sortfile}".format(gsort=gclust_sort,
                                                            rawfile=args["input_fa"],
                                                            sortfile=sorted_file)
-        logging.info("# Sort block sequences with command: {command}".format(command=command))
+        logging.info("# Sort blocks with command: {command}".format(command=command))
         os.system(command)
         # cluster
         gclust_log = args["output_dir"] + '/' + 'gclust.log'
@@ -66,11 +66,11 @@ if __name__ == "__main__":
                                                                     sortfile=sorted_file,
                                                                     gclust_out=clust_out,
                                                                     gclust_log=gclust_log)
-        logging.info("# Cluster block sequences with command: {command}".format(command=command))
+        logging.info("# Cluster blocks with command: {command}".format(command=command))
         os.system(command)
         # gclust2fa
         clust_n = gi.gclust2fa(sorted_file, clust_out, clust_fa)
-        logging.info("# Total {n} cluster block sequences are got".format(n=clust_n))
+        logging.info("# Total {n} clusters are got".format(n=clust_n))
     elif args['method_path'].split('/')[-1] == "cd-hit-est":
         command = "{cdhitest} " \
                   "-M 0 " \
@@ -82,9 +82,9 @@ if __name__ == "__main__":
                                     in_fa=args["input_fa"],
                                     clust_fa=clust_fa,
                                     idt=float(args["sequence_identity"]) / 100)
-        logging.info("# Cluster block sequences with command: {command}".format(command=command))
+        logging.info("# Cluster blocks with command: {command}".format(command=command))
         os.system(command)
-        logging.info("# Finish clustering block.")
+        logging.info("# Finish clustering blocks.")
     elif args['method_path'].split('/')[-1] == "blastn":
         blastn_dir = args['method_path'].rstrip('blastn').rstrip('/')
         makedb = blastn_dir + '/' + "makeblastdb"
@@ -111,15 +111,37 @@ if __name__ == "__main__":
                                                                        dbidx=dbidx,
                                                                        blastout=blast_out,
                                                                        thread=args["thread"])
-        logging.info("# Blast block sequences with command: {command}".format(command=command))
+        logging.info("# Blast blocks with command: {command}".format(command=command))
         os.system(command)
         logging.info("# Finish blast.")
-        # run blastcluster
+        # run blastCluster
         dir_name, file_name = os.path.split(os.path.abspath(sys.argv[0]))
         command = "perl " + dir_name + '/' + "blastCluster.pl " + ' '.join([args["input_fa"],
                                                                             str(args["sequence_identity"]),
                                                                             blast_out,
                                                                             clust_fa])
-        logging.info("# Cluster block sequences using blast results with command: {command}".format(command=command))
+        logging.info("# Cluster blocks using blast results with command: {command}".format(command=command))
         os.system(command)
-        logging.info("# Finish clustering.")
+        logging.info("# Finish clustering blocks.")
+    elif args['method_path'].split('/')[-1] == "minimap2":
+        # minimap2
+        minimap2_out = args["output_dir"] + '/' + "temp_minmap2out.paf"
+        command = "{minimap2} " \
+                  "-x asm20 " \
+                  "-DP " \
+                  "-t {th} " \
+                  "{infa} {infa} > {paf}".format(minimap2=args["method_path"],
+                                                 th=args["thread"],
+                                                 infa=args["input_fa"],
+                                                 paf=minimap2_out)
+        logging.info("# Minimap2 blocks with command: {command}".format(command=command))
+        os.system(command)
+        logging.info("# Finish minimap2.")
+        # run minimap2clust
+        logging.info("# Cluster blocks using minimap2 results")
+        minimap2clust(args["input_fa"],
+                      minimap2_out,
+                      args["sequence_identity"],
+                      clust_fa,
+                      clust_out)
+        logging.info("# Finish clustering blocks.")
