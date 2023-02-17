@@ -158,6 +158,7 @@ def gff_add_cov(rawgff, newgff, cov_dict):
             for line in fin:
                 if line.startswith('#'):
                     fout.write(line)
+                    continue
                 temp = line.rstrip().split('\t')
                 seqid = gi.string2dict(temp[8])['ID']
                 if seqid in cov_dict:
