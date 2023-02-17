@@ -138,7 +138,7 @@ if __name__ == "__main__":
         os.system(command)
         logging.info("# Finish minimap2.")
         # run minimap2clust
-        logging.info("# Cluster blocks using minimap2 results")
+        logging.info("# Cluster blocks using minimap2 results.")
         minimap2clust(args["input_fa"],
                       minimap2_out,
                       args["sequence_identity"],

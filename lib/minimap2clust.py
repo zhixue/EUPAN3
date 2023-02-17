@@ -146,15 +146,15 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output_fa', metavar='<output.fa>',
                         help='Path of output fasta', type=str, required=True)
     parser.add_argument('-oc', '--output_clust', metavar='<output.clust>',
-                        help='Path of output clust', type=str, default='')
+                        help='Path of output clust (default: <output.fa>.clstr)', type=str, default='')
     args = vars(parser.parse_args())
 
     sortedfastapath = args["input_fa"]
     mappath = args["paf"]
-    globalidentity = args["g"]
+    globalidentity = args["global_identity"]
     outfastapath = args["output_fa"]
     if args["output_clust"] == '':
-        outclustpath = args["output_fa"] + '.minimap2clust'
+        outclustpath = args["output_fa"] + '.clstr'
     else:
         outclustpath = args["output_clust"]
 
