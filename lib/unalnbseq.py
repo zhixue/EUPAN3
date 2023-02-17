@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     @Author: Hongzhang Xue
-    @Modified: 2023/2/16 20:35 PM
+    @Modified: 2023/2/17 10:38 AM
     @Usage: python3 unalnbseq.py [options]
 """
 import argparse
@@ -45,6 +45,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
     out_record_num = 0
     out_blockseq_num = 0
     seq_name = ''
+    previous_seq_name = ''
     seq_name_trans = ''
     seq_seq = ''
     bseq_prefix = sample_tagname + '_' + 'bs'
@@ -74,6 +75,11 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
                                             str(interval.upper_bound), '.', '.', '.',
                                             gi.dict2string({"ID": bseq_prefix + str(out_blockseq_num),
                                                             "length": str(interval.length)})]
+                                if seq_name != previous_seq_name:
+                                    gff_string += '##sequence-region {chrn} 1 {end}\n'.format(chrn=seq_name,
+                                                                                              end=chrn_intervals[
+                                                                                                  seq_name_trans][0])
+                                    previous_seq_name = seq_name
                                 gff_string += '\t'.join(gff_cols) + '\n'
                                 fout.write(bseq_anno + '\n')
                                 fout.write(block_seq + '\n')
@@ -108,6 +114,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
                         fout.write(block_seq + '\n')
     # write gff
     with open(output_fa + '.gff3', 'w') as fout:
+        fout.write('##gff-version 3')
         fout.write("# Generate from {file1} and {file2}.\n".format(
             file1=fasta_file,
             file2=unalign_path
@@ -150,7 +157,7 @@ def gff_add_cov(rawgff, newgff, cov_dict):
         with open(newgff, 'w') as fout:
             for line in fin:
                 if line.startswith('#'):
-                    continue
+                    fout.write(line)
                 temp = line.rstrip().split('\t')
                 seqid = gi.string2dict(temp[8])['ID']
                 if seqid in cov_dict:
