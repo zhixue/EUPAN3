@@ -114,7 +114,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
                         fout.write(block_seq + '\n')
     # write gff
     with open(output_fa + '.gff3', 'w') as fout:
-        fout.write('##gff-version 3')
+        fout.write('##gff-version 3\n')
         fout.write("# Generate from {file1} and {file2}.\n".format(
             file1=fasta_file,
             file2=unalign_path
