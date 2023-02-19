@@ -128,7 +128,7 @@ if __name__ == "__main__":
         minimap2_out = args["output_dir"] + '/' + "temp_minmap2out.paf"
         command = "{minimap2} " \
                   "-x asm20 " \
-                  "-DP " \
+                  "-DP --dual=no " \
                   "-t {th} " \
                   "{infa} {infa} > {paf}".format(minimap2=args["method_path"],
                                                  th=args["thread"],
