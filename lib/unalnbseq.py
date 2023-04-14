@@ -285,7 +285,7 @@ if __name__ == "__main__":
         else:
             minimap2_idt_par = ""
         temp_paf = "bseq2ref.paf"
-        command = '{minimap2} -c -t {thread} {idt_par} {ref} {query} > {temp_dir}/{temp_paf}'.format(
+        command = '{minimap2} -t {thread} {idt_par} {ref} {query} > {temp_dir}/{temp_paf}'.format(
             minimap2=args["realign_minimap2"],
             thread=args["realign_thread"],
             idt_par=minimap2_idt_par,
