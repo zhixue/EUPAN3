@@ -145,7 +145,10 @@ def drop_seq_from_paf(paf_path, least_coverage, out_seq_list_path):
                 # qcov 0 ~ 100
                 qcov = float(temp[9]) / float(temp[1]) * 100
                 # write seq cov 0 ~ 1
-                seq_cov_dict[temp[0]] = qcov / 100
+                if temp[0] in seq_cov_dict:
+                    seq_cov_dict[temp[0]] = max(qcov / 100, seq_cov_dict[temp[0]])
+                else:
+                    seq_cov_dict[temp[0]] = qcov / 100
                 if qcov >= least_coverage:
                     output_set.add(temp[0])
             fout.write('\n'.join(output_set))
