@@ -270,7 +270,7 @@ if __name__ == "__main__":
                          type=int,
                          default=80)
     parserr.add_argument('-rs', '--realign_segmentmode', metavar='<int>',
-                         help='[Only use when -rr on] Compute coverage with all segment parts (default: 1)',
+                         help='[Only use when -rr on] Compute coverage with all segment parts (default: 0)',
                          type=int, choices=[0, 1],
                          default=0)
     parserr.add_argument('-rm', '--realign_minimap2', metavar='<minimap2_path>',
