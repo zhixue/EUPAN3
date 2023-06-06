@@ -17,6 +17,20 @@ def trans_contig_name(string_a, char='_'):
     return re.sub('[^0-9a-zA-Z]', char, string_a)
 
 
+def union_length(regions):
+    regions = sorted(regions)
+    count_length = 0
+    for i in range(1, len(regions)):
+        if regions[i-1][1] > regions[i][1]:
+            regions[i] = (regions[i][0], regions[i-1][1])
+        count_length += \
+            (regions[i-1][1] - regions[i-1][0] + 1) - \
+            max(0, regions[i-1][1] - regions[i][0] + 1)
+    # final one
+    count_length += regions[-1][1] - regions[-1][0] + 1
+    return count_length
+
+
 def read_unaln_table(unalign_table_path, kind_unalign, min_len):
     unalign_inf_dict = {}
     with open(unalign_table_path) as f:
@@ -122,7 +136,7 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
     return in_record_num, out_record_num, out_blockseq_num
 
 
-def drop_seq_from_paf(paf_path, least_coverage, out_seq_list_path):
+def drop_seq_from_paf(paf_path, least_idt, least_coverage, out_seq_list_path, out_seq_stat_path, segment_mode=1):
     # paf format
     # 1 string, query name
     # 2 int, query length
@@ -136,23 +150,69 @@ def drop_seq_from_paf(paf_path, least_coverage, out_seq_list_path):
     # 10 int, number of residue matched
     # 11 int, alignment block length
     # 12 int, mapping quality (0~255,255:missing)
-    with open(paf_path) as fin:
-        with open(out_seq_list_path, 'w') as fout:
-            seq_cov_dict = dict()
-            output_set = set()
+
+    # init
+    seq_cov_dict = dict()
+    output_set = set()
+
+    if segment_mode != 0:
+        query_length = dict()
+        query_map_region = dict()
+        with open(paf_path) as fin:
             for line in fin:
                 temp = line.rstrip().split('\t')
-                # qcov 0 ~ 100
-                qcov = float(temp[9]) / float(temp[1]) * 100
-                # write seq cov 0 ~ 1
-                if temp[0] in seq_cov_dict:
-                    seq_cov_dict[temp[0]] = max(qcov / 100, seq_cov_dict[temp[0]])
+                # like paf
+                if float(temp[9]) / float(temp[10]) * 100 < least_idt:
+                    continue
+                if temp[0] not in query_length:
+                    query_length[temp[0]] = int(temp[1])
+                    # query end open -> query end closed
+                if temp[0] not in query_map_region:
+                    query_map_region[temp[0]] = [(int(temp[2]), int(temp[3]) - 1)]
                 else:
-                    seq_cov_dict[temp[0]] = qcov / 100
-                if qcov > least_coverage:
-                    output_set.add(temp[0])
-            fout.write('\n'.join(output_set))
-    return len(output_set), seq_cov_dict
+                    if (int(temp[2]), int(temp[3]) - 1) not in query_map_region[temp[0]]:
+                        query_map_region[temp[0]] += [(int(temp[2]), int(temp[3]) - 1)]
+
+        # compute coverage and write
+        query_map_length = dict()
+        fout1 = open(out_seq_list_path, 'w')
+        fout2 = open(out_seq_stat_path, 'w')
+        fout2.write('\t'.join(['#query', 'query_length',
+                               'query_aligned_length',
+                               'query_aligned_cov',
+                               'query_aligned_region']) + '\n')
+        for key in query_map_region:
+            query_map_length[key] = union_length(query_map_region[key])
+            qcov = query_map_length[key] / query_length[key]
+            seq_cov_dict[key] = qcov
+            fout2.write('\t'.join([str(x) for x in [key, query_length[key],
+                                                    query_map_length[key],
+                                                    seq_cov_dict[key],
+                                                    query_map_region[key]]]) + '\n')
+            if qcov * 100 > least_coverage:
+                output_set.add(key)
+        fout1.write('\n'.join(output_set))
+        fout1.close()
+        fout2.close()
+        return len(output_set), seq_cov_dict
+
+    else:
+        # max aligned length of hsp
+        with open(paf_path) as fin:
+            with open(out_seq_list_path, 'w') as fout:
+                for line in fin:
+                    temp = line.rstrip().split('\t')
+                    # qcov 0 ~ 100
+                    qcov = float(temp[9]) / float(temp[1]) * 100
+                    # write seq cov 0 ~ 1
+                    if temp[0] in seq_cov_dict:
+                        seq_cov_dict[temp[0]] = max(qcov / 100, seq_cov_dict[temp[0]])
+                    else:
+                        seq_cov_dict[temp[0]] = qcov / 100
+                    if qcov > least_coverage:
+                        output_set.add(temp[0])
+                fout.write('\n'.join(output_set))
+        return len(output_set), seq_cov_dict
 
 
 def gff_add_cov(rawgff, newgff, cov_dict):
@@ -165,7 +225,7 @@ def gff_add_cov(rawgff, newgff, cov_dict):
                 temp = line.rstrip().split('\t')
                 seqid = gi.string2dict(temp[8])['ID']
                 if seqid in cov_dict:
-                    fout.write(line.rstrip() + "qcov={i};\n".format(i=str(round(cov_dict[seqid], 3))))
+                    fout.write(line.rstrip() + "qcov={i};\n".format(i=str(round(cov_dict[seqid], 6))))
                 else:
                     fout.write(line.rstrip() + "qcov={i};\n".format(i=str(0)))
     return len(cov_dict)
@@ -209,6 +269,10 @@ if __name__ == "__main__":
                          help='[Only use when -rr on] Min alignment coverage of dropped sequences (default: 80)',
                          type=int,
                          default=80)
+    parserr.add_argument('-rs', '--realign_segmentmode', metavar='<int>',
+                         help='[Only use when -rr on] Compute coverage with all segment parts (default: 1)',
+                         type=int, choices=[0, 1],
+                         default=0)
     parserr.add_argument('-rm', '--realign_minimap2', metavar='<minimap2_path>',
                          help='[Only use when -rr on] Path of minimap2 (default: minimap2 in $PATH)', type=str,
                          default='minimap2')
@@ -288,7 +352,14 @@ if __name__ == "__main__":
         else:
             minimap2_idt_par = ""
         temp_paf = "bseq2ref.paf"
-        command = '{minimap2} -t {thread} {idt_par} {ref} {query} > {temp_dir}/{temp_paf}'.format(
+
+        if args["realign_segmentmode"]:
+            add_parameter = '--no-long-join'
+        else:
+            add_parameter = ''
+
+        command = '{minimap2} {addp} -t {thread} {idt_par} {ref} {query} > {temp_dir}/{temp_paf}'.format(
+            addp=add_parameter,
             minimap2=args["realign_minimap2"],
             thread=args["realign_thread"],
             idt_par=minimap2_idt_par,
@@ -297,12 +368,20 @@ if __name__ == "__main__":
             temp_dir=temp_dir,
             temp_paf=temp_paf
         )
+        logging.info("# Realigning block sequences to references: {cmd}".format(cmd=command))
         os.system(command)
         logging.info("# Finish realigning block sequences to references.")
         # scan paf
         temp_out_seq_list_path = "mapped_bseq.txt"
-        drop_n, seq_cov = drop_seq_from_paf(temp_dir + '/' + temp_paf, args["realign_coverage"],
-                                            temp_dir + '/' + temp_out_seq_list_path)
+        temp_out_seq_stat_path = "mapped_bseq.stat"
+        logging.info("# Compute block sequence coverage. \
+        # Segment mode = {smode}.".format(smode=args["realign_segmentmode"]))
+        drop_n, seq_cov = drop_seq_from_paf(temp_dir + '/' + temp_paf,
+                                            args["realign_identity"],
+                                            args["realign_coverage"],
+                                            temp_dir + '/' + temp_out_seq_list_path,
+                                            temp_dir + '/' + temp_out_seq_stat_path,
+                                            args["realign_segmentmode"])
         # copy raw bsq.gff
         temp_out_gff_raw_path = "unalign_bseq.gff3"
         os.system('cp {output_gff} {temp_dir}/{temp_gff}'.format(temp_dir=temp_dir,
