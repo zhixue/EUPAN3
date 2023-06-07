@@ -18,7 +18,7 @@ def trans_contig_name(string_a, char='_'):
 
 
 def union_length(regions):
-    regions = sorted(regions)
+    # regions = sorted(regions)
     count_length = 0
     for i in range(1, len(regions)):
         if regions[i-1][1] > regions[i][1]:
@@ -182,6 +182,7 @@ def drop_seq_from_paf(paf_path, least_idt, least_coverage, out_seq_list_path, ou
                                'query_aligned_cov',
                                'query_aligned_region']) + '\n')
         for key in query_map_region:
+            query_map_region[key] = sorted(query_map_region[key])
             query_map_length[key] = union_length(query_map_region[key])
             qcov = query_map_length[key] / query_length[key]
             seq_cov_dict[key] = qcov

@@ -34,6 +34,10 @@ if __name__ == "__main__":
                          help='Min alignment identity of sequences (choices: 80/90/95. default: 90)', type=int,
                          choices=[80, 90, 95],
                          default=90)
+    parserq.add_argument('-ml', '--min_alignment', metavar='<int>',
+                         help='Min alignment length of sequences (default: 65, if --large_genome, default: '
+                         '500)', type=int,
+                         default=-1)
     parserq.add_argument('--large_genome', default=False, action='store_true',
                          help='Use optimal parameters for evaluation of large genomes (typically > 100 Mbp)')
 
@@ -46,24 +50,34 @@ if __name__ == "__main__":
             length_threshold_par = '-m 3000'
         else:
             length_threshold_par = '-m ' + str(args["length_threshold"])
+        if args["min_alignment"] == -1:
+            min_alignment_par = '--min-alignment 500'
+        else:
+            min_alignment_par = '--min-alignment ' + str(args["min_length"])
     else:
         large_par = ''
         if args["length_threshold"] == -1:
             length_threshold_par = '-m 500'
         else:
             length_threshold_par = '-m ' + str(args["length_threshold"])
+        if args["min_alignment"] == -1:
+            min_alignment_par = '--min-alignment 65'
+        else:
+            min_alignment_par = '--min-alignment ' + str(args["min_length"])
 
     if args["gff_path"]:
         gff_par = "-g " + args["gff_path"]
     else:
         gff_par = ''
 
-    command = "{quast} -t {thread} {length_threshold_par} {large_par} -r {ref} {gff_par} -o {output_dir} " \
+    command = "{quast} -t {thread} {large_par} {length_threshold_par} {min_alignment} " \
+              "-r {ref} {gff_par} -o {output_dir} " \
               "--no-icarus --no-snps " \
               "--min-identity {min_indentity} {assembly}".format(quast=args["quast_path"],
                                                                  thread=args["thread"],
-                                                                 length_threshold_par=length_threshold_par,
                                                                  large_par=large_par,
+                                                                 length_threshold_par=length_threshold_par,
+                                                                 min_alignment=min_alignment_par,
                                                                  ref=args["reference_path"],
                                                                  gff_par=gff_par,
                                                                  output_dir=args["output_dir"],
