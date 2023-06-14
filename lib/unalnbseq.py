@@ -17,20 +17,6 @@ def trans_contig_name(string_a, char='_'):
     return re.sub('[^0-9a-zA-Z]', char, string_a)
 
 
-def union_length(regions):
-    # regions = sorted(regions)
-    count_length = 0
-    for i in range(1, len(regions)):
-        if regions[i-1][1] > regions[i][1]:
-            regions[i] = (regions[i][0], regions[i-1][1])
-        count_length += \
-            (regions[i-1][1] - regions[i-1][0] + 1) - \
-            max(0, regions[i-1][1] - regions[i][0] + 1)
-    # final one
-    count_length += regions[-1][1] - regions[-1][0] + 1
-    return count_length
-
-
 def read_unaln_table(unalign_table_path, kind_unalign, min_len):
     unalign_inf_dict = {}
     with open(unalign_table_path) as f:
@@ -136,7 +122,8 @@ def write_interval_seq(fasta_file, chrn_intervals, output_fa,
     return in_record_num, out_record_num, out_blockseq_num
 
 
-def drop_seq_from_paf(paf_path, least_idt, least_coverage, out_seq_list_path, out_seq_stat_path, segment_mode=1):
+def drop_seq_from_paf(paf_path, least_idt, least_coverage, filtered_length,
+                      out_seq_list_path, out_seq_stat_path, segment_mode=1):
     # paf format
     # 1 string, query name
     # 2 int, query length
@@ -158,6 +145,8 @@ def drop_seq_from_paf(paf_path, least_idt, least_coverage, out_seq_list_path, ou
     if segment_mode != 0:
         query_length = dict()
         query_map_region = dict()
+        query_cov_region = dict()
+        query_uncov_region = dict()
         with open(paf_path) as fin:
             for line in fin:
                 temp = line.rstrip().split('\t')
@@ -180,16 +169,24 @@ def drop_seq_from_paf(paf_path, least_idt, least_coverage, out_seq_list_path, ou
         fout2.write('\t'.join(['#query', 'query_length',
                                'query_aligned_length',
                                'query_aligned_cov',
-                               'query_aligned_region']) + '\n')
+                               'query_aligned_region',
+                               'query_cov_region',
+                               'query_uncov_region']) + '\n')
         for key in query_map_region:
-            query_map_region[key] = sorted(query_map_region[key])
-            query_map_length[key] = union_length(query_map_region[key])
+            query_map_region[key] = gi.GIntervalList(sorted(query_map_region[key]))
+            query_cov_region[key] = gi.union_interval(query_map_region[key])
+            query_map_length[key] = gi.union_length(query_cov_region[key])
+            query_uncov_region[key] = gi.complementary_interval(query_cov_region[key],
+                                                                gi.GInterval([0, query_length[key]]),
+                                                                min_len=filtered_length)
             qcov = query_map_length[key] / query_length[key]
             seq_cov_dict[key] = qcov
             fout2.write('\t'.join([str(x) for x in [key, query_length[key],
                                                     query_map_length[key],
                                                     seq_cov_dict[key],
-                                                    query_map_region[key]]]) + '\n')
+                                                    query_map_region[key],
+                                                    query_cov_region[key],
+                                                    query_uncov_region[key]]]) + '\n')
             if qcov * 100 > least_coverage:
                 output_set.add(key)
         fout1.write('\n'.join(output_set))
@@ -224,7 +221,10 @@ def gff_add_cov(rawgff, newgff, cov_dict):
                     fout.write(line)
                     continue
                 temp = line.rstrip().split('\t')
-                seqid = gi.string2dict(temp[8])['ID']
+                attr = gi.string2dict(temp[8])
+                seqid = attr['ID']
+                if 'qcov' in attr:
+                    continue
                 if seqid in cov_dict:
                     fout.write(line.rstrip() + "qcov={i};\n".format(i=str(round(cov_dict[seqid], 6))))
                 else:
@@ -359,7 +359,7 @@ if __name__ == "__main__":
         else:
             add_parameter = ''
 
-        command = '{minimap2} {addp} -t {thread} {idt_par} {ref} {query} > {temp_dir}/{temp_paf}'.format(
+        command = '{minimap2} {addp} -c -t {thread} {idt_par} {ref} {query} > {temp_dir}/{temp_paf}'.format(
             addp=add_parameter,
             minimap2=args["realign_minimap2"],
             thread=args["realign_thread"],
@@ -380,6 +380,7 @@ if __name__ == "__main__":
         drop_n, seq_cov = drop_seq_from_paf(temp_dir + '/' + temp_paf,
                                             args["realign_identity"],
                                             args["realign_coverage"],
+                                            length_cutoff,
                                             temp_dir + '/' + temp_out_seq_list_path,
                                             temp_dir + '/' + temp_out_seq_stat_path,
                                             args["realign_segmentmode"])

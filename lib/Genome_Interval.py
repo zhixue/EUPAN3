@@ -211,7 +211,7 @@ def complementary_interval(interval_list, universal_region, min_len=500):
     p_end = universal_region.upper_bound
     if p_end - min_len >= p_start:
         rest_string += str(p_start) + interval_list.sep_bounds + str(p_end)
-    return GIntervalList(rest_string)
+    return GIntervalList(rest_string.rstrip(interval_list.sep_intervals))
 
 
 def intersect_interval(interval_list1, interval_list2):
